@@ -32,11 +32,13 @@ const createReturnSalesOrder = async (params) => {
     //     return "failed to create return order"
     // }
 
+    let response = { status: '', message: '' }
+
     for (const returnItem of ReturnItems) {
 
         checkSalesOrderItems.find((soItem) => {
             if (soItem.ProductID !== returnItem.ProductID) {
-                return `${returnItem.ProductID} doesn't exists in the sales order`
+                response.message = `${returnItem.ProductID} doesn't exists in the sales order`
             }
         })
 
@@ -45,7 +47,7 @@ const createReturnSalesOrder = async (params) => {
     return {
         checkSalesOrder,
         checkSalesOrderItems,
-        // createReturnSalesOrder
+        response
     }
 
 }
