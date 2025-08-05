@@ -59,19 +59,19 @@ services:
       - mynetwork
     restart: unless-stopped
 
-  frontend:
-    build:
-      context: ./frontend/hexalyte-vims-ui-v1-13
-    container_name: frontend-app
-    env_file:
-      - .env
-    ports:
-      - "3002:3000"
-    networks:
-      - mynetwork
-    depends_on:
-      - backend
-    restart: unless-stopped
+  # frontend:
+  #   build:
+  #     context: ./frontend/hexalyte-vims-ui-v1-13
+  #   container_name: frontend-app
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "3002:3000"
+  #   networks:
+  #     - mynetwork
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
 
 networks:
   mynetwork:
