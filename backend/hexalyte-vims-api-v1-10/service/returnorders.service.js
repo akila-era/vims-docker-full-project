@@ -106,8 +106,7 @@ const createReturnSalesOrder = async (params) => {
         const existingReturns = await ReturnOrders.findAll({
             where: { SalesOrderID },
             include: [{
-                model: ReturnOrderItems,
-                as: 'returnItems' // Adjust association alias as needed
+                model: ReturnOrderItems
             }]
         });
 
@@ -162,16 +161,16 @@ const createReturnSalesOrder = async (params) => {
 
         try {
             // Generate return order ID (adjust logic as needed)
-            const returnOrderId = `RET-${Date.now()}`;
+            // const returnOrderId = `RET-${Date.now()}`;
 
             // Create return order
             const returnOrder = await ReturnOrders.create({
-                ReturnOrderID: returnOrderId,
+                // ReturnOrderID: returnOrderId,
                 SalesOrderID,
                 ReturnDate: ReturnDate || new Date(),
                 Reason,
                 CreatedBy,
-                Status: 'Pending', // Adjust default status as needed
+                // Status: 'Pending', // Adjust default status as needed
                 CreatedAt: new Date(),
                 UpdatedAt: new Date()
             }, { transaction });
