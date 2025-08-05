@@ -12,10 +12,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
-      returnorders.belongsTo(models.returnorderitems, { foreignKey: 'ReturnID' })
+      // returnorders.belongsTo(models.returnorderitems, { foreignKey: 'ReturnID' })
+      returnorders.hasMany(models.returnorderitems, { foreignKey: 'ReturnID' });
 
       returnorders.belongsTo(models.salesorder, { foreignKey: 'SalesOrderID' })
       returnorders.belongsTo(models.purchaseorder, { foreignKey: 'PurchaseOrderID' })
+      returnorders.belongsTo(models.user, { foreignKey: 'CreatedBy' });
 
     }
   }

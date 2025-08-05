@@ -69,6 +69,161 @@ const User = db.user
 
 // }
 
+// const createReturnSalesOrder = async (params) => {
+//     const { SalesOrderID, ReturnDate, Reason, CreatedBy, ReturnItems } = params;
+
+//     try {
+//         // Check if user exists
+//         const checkUser = await User.findByPk(CreatedBy);
+//         if (!checkUser) {
+//             return {
+//                 status: 'error',
+//                 message: 'No user with matching ID found'
+//             };
+//         }
+
+//         // Check if sales order exists
+//         const salesOrder = await SalesOrders.findOne({ where: { OrderID: SalesOrderID } });
+//         if (!salesOrder) {
+//             return {
+//                 status: 'error',
+//                 message: 'No sales order found'
+//             };
+//         }
+
+//         // Get all sales order items
+//         const salesOrderItems = await SalesOrderDetails.findAll({
+//             where: { OrderID: SalesOrderID }
+//         });
+//         if (!salesOrderItems || salesOrderItems.length === 0) {
+//             return {
+//                 status: 'error',
+//                 message: 'No sales order items found'
+//             };
+//         }
+
+//         // Get existing returns for this sales order
+//         const existingReturns = await ReturnOrders.findAll({
+//             where: { SalesOrderID },
+//             include: [{
+//                 model: ReturnOrderItems
+//             }]
+//         });
+
+//         // Calculate already returned quantities
+//         const returnedQuantities = {};
+//         if (existingReturns && existingReturns.length > 0) {
+//             for (const returnOrder of existingReturns) {
+//                 if (returnOrder.returnItems) {
+//                     for (const returnItem of returnOrder.returnorderitems) {
+//                         const productId = returnItem.ProductID;
+//                         returnedQuantities[productId] = (returnedQuantities[productId] || 0) + parseInt(returnItem.Quantity);
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Validate return items
+//         for (const returnItem of ReturnItems) {
+//             const salesOrderItem = salesOrderItems.find(item =>
+//                 item.ProductID === returnItem.ProductID
+//             );
+
+//             if (!salesOrderItem) {
+//                 return {
+//                     status: 'error',
+//                     message: `Product with ID ${returnItem.ProductID} not found in the sales order`
+//                 };
+//             }
+
+//             const originalQuantity = parseInt(salesOrderItem.Quantity);
+//             const alreadyReturned = returnedQuantities[returnItem.ProductID] || 0;
+//             const availableForReturn = originalQuantity - alreadyReturned;
+//             const requestedQuantity = parseInt(returnItem.Quantity);
+
+//             if (requestedQuantity > availableForReturn) {
+//                 return {
+//                     status: 'error',
+//                     message: `Insufficient quantity for product ${returnItem.ProductID}. Available for return: ${availableForReturn}, requested: ${requestedQuantity}`
+//                 };
+//             }
+
+//             if (requestedQuantity <= 0) {
+//                 return {
+//                     status: 'error',
+//                     message: `Invalid quantity for product ${returnItem.ProductID}. Quantity must be greater than 0`
+//                 };
+//             }
+//         }
+
+//         // Create the return order
+//         const transaction = await db.sequelize.transaction(); // Assuming you're using Sequelize transactions
+
+//         try {
+//             // Generate return order ID (adjust logic as needed)
+//             // const returnOrderId = `RET-${Date.now()}`;
+
+//             // Create return order
+//             const returnOrder = await ReturnOrders.create({
+//                 // ReturnOrderID: returnOrderId,
+//                 SalesOrderID,
+//                 ReturnDate: ReturnDate || new Date(),
+//                 Reason,
+//                 CreatedBy,
+//                 // Status: 'Pending', // Adjust default status as needed
+//                 CreatedAt: new Date(),
+//                 UpdatedAt: new Date()
+//             }, { transaction });
+
+//             // Create return order details
+//             const returnOrderDetails = [];
+//             for (const returnItem of ReturnItems) {
+//                 const salesOrderItem = salesOrderItems.find(item =>
+//                     item.ProductID === returnItem.ProductID
+//                 );
+
+//                 const returnOrderDetail = await ReturnOrderItems.create({
+//                     ReturnID: returnOrder.ReturnID,
+//                     ProductID: returnItem.ProductID,
+//                     Quantity: returnItem.Quantity,
+//                     // UnitPrice: salesOrderItem.UnitPrice, // Use original price
+//                     // TotalAmount: parseFloat(salesOrderItem.UnitPrice) * parseInt(returnItem.Quantity),
+//                     // Reason: returnItem.Reason || '', // Item-specific reason or general reason
+//                     CreatedAt: new Date(),
+//                     UpdatedAt: new Date()
+//                 }, { transaction });
+
+//                 returnOrderDetails.push(returnOrderDetail);
+//             }
+
+//             // Commit transaction
+//             await transaction.commit();
+
+//             return {
+//                 status: 'success',
+//                 message: 'Return order created successfully',
+//                 data: {
+//                     returnOrder,
+//                     returnOrderDetails
+//                 }
+//             };
+
+//         } catch (error) {
+//             // Rollback transaction on error
+//             await transaction.rollback();
+//             throw error;
+//         }
+
+//     } catch (error) {
+//         console.error('Error creating return sales order:', error);
+//         return {
+//             status: 'error',
+//             message: 'An error occurred while creating the return order',
+//             error: error.message
+//         };
+//     }
+// };
+
 const createReturnSalesOrder = async (params) => {
     const { SalesOrderID, ReturnDate, Reason, CreatedBy, ReturnItems } = params;
 
@@ -114,8 +269,8 @@ const createReturnSalesOrder = async (params) => {
         const returnedQuantities = {};
         if (existingReturns && existingReturns.length > 0) {
             for (const returnOrder of existingReturns) {
-                if (returnOrder.returnItems) {
-                    for (const returnItem of returnOrder.returnItems) {
+                if (returnOrder.returnorderitems) {
+                    for (const returnItem of returnOrder.returnorderitems) {
                         const productId = returnItem.ProductID;
                         returnedQuantities[productId] = (returnedQuantities[productId] || 0) + parseInt(returnItem.Quantity);
                     }
@@ -157,20 +312,15 @@ const createReturnSalesOrder = async (params) => {
         }
 
         // Create the return order
-        const transaction = await sequelize.transaction(); // Assuming you're using Sequelize transactions
+        const transaction = await db.sequelize.transaction();
 
         try {
-            // Generate return order ID (adjust logic as needed)
-            // const returnOrderId = `RET-${Date.now()}`;
-
             // Create return order
             const returnOrder = await ReturnOrders.create({
-                // ReturnOrderID: returnOrderId,
                 SalesOrderID,
                 ReturnDate: ReturnDate || new Date(),
                 Reason,
                 CreatedBy,
-                // Status: 'Pending', // Adjust default status as needed
                 CreatedAt: new Date(),
                 UpdatedAt: new Date()
             }, { transaction });
@@ -182,13 +332,11 @@ const createReturnSalesOrder = async (params) => {
                     item.ProductID === returnItem.ProductID
                 );
 
-                const returnOrderDetail = await ReturnOrderDetails.create({
-                    ReturnOrderID: returnOrderId,
+                const returnOrderDetail = await ReturnOrderItems.create({
+                    ReturnID: returnOrder.ReturnID,
                     ProductID: returnItem.ProductID,
                     Quantity: returnItem.Quantity,
-                    UnitPrice: salesOrderItem.UnitPrice, // Use original price
-                    TotalAmount: parseFloat(salesOrderItem.UnitPrice) * parseInt(returnItem.Quantity),
-                    Reason: returnItem.Reason || Reason, // Item-specific reason or general reason
+                    Note: returnItem.Note || '',
                     CreatedAt: new Date(),
                     UpdatedAt: new Date()
                 }, { transaction });
@@ -221,6 +369,46 @@ const createReturnSalesOrder = async (params) => {
             message: 'An error occurred while creating the return order',
             error: error.message
         };
+    }
+};
+
+// Helper function to get return summary for a sales order
+const getReturnSummary = async (salesOrderId) => {
+    try {
+        const returns = await ReturnOrders.findAll({
+            where: { SalesOrderID: salesOrderId },
+            include: [{
+                model: ReturnOrderItems
+            }]
+        });
+
+        const summary = {};
+        for (const returnOrder of returns) {
+            if (returnOrder.returnorderitems) {
+                for (const item of returnOrder.returnorderitems) {
+                    const productId = item.ProductID;
+                    if (!summary[productId]) {
+                        summary[productId] = {
+                            totalReturned: 0,
+                            returns: []
+                        };
+                    }
+                    summary[productId].totalReturned += parseInt(item.Quantity);
+                    summary[productId].returns.push({
+                        returnId: returnOrder.ReturnID,
+                        quantity: item.Quantity,
+                        date: returnOrder.ReturnDate,
+                        reason: returnOrder.Reason,
+                        note: item.Note
+                    });
+                }
+            }
+        }
+
+        return summary;
+    } catch (error) {
+        console.error('Error getting return summary:', error);
+        return {};
     }
 };
 
