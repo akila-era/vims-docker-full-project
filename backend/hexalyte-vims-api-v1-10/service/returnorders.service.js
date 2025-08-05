@@ -26,16 +26,26 @@ const createReturnSalesOrder = async (params) => {
         return "no sales order items"
     }
 
-    const createReturnSalesOrder = await ReturnOrders.create({ SalesOrderID, ReturnDate, Reason, CreatedBy })
+    // const createReturnSalesOrder = await ReturnOrders.create({ SalesOrderID, ReturnDate, Reason, CreatedBy })
 
-    if (!createReturnSalesOrder) {
-        return "failed to create return order"
+    // if (!createReturnSalesOrder) {
+    //     return "failed to create return order"
+    // }
+
+    for (const returnItem of ReturnItems) {
+
+        checkSalesOrderItems.find((soItem) => {
+            if (soItem.ProductID !== returnItem.ProductID) {
+                return `${returnItem.ProductID} doesn't exists in the sales order`
+            }
+        })
+
     }
 
     return {
         checkSalesOrder,
         checkSalesOrderItems,
-        createReturnSalesOrder
+        // createReturnSalesOrder
     }
 
 }
