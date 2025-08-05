@@ -51,8 +51,8 @@ const getsalesorderbyID = catchAsync(async (req, res) => {
     }
 });
 
-const updatesalesorder = catchAsync(async (req, res) => {
-    const [affectedRows] = await Salesorderservices.updatesalesorderById(req.params.id, req.body);
+const updateSalesorderPaymentStatus = catchAsync(async (req, res) => {
+    const [affectedRows] = await Salesorderservices.updatesalesorderPayementStatusById(req.params.id, req.body);
     if (affectedRows === 0) {
         res.status(httpStatus.NOT_FOUND).send({
             status: "failure",
@@ -68,6 +68,25 @@ const updatesalesorder = catchAsync(async (req, res) => {
         salesorder: updatedSalesOrder
     });
 });
+
+const updateSalesorder = catchAsync(async (req, res) => {
+  const orderId = req.params.id;
+  const updatedSalesorder = await Salesorderservices.updateSalesorderById(orderId, req.body);
+
+  if (updatedSalesorder.Status === "success") {
+    res.status(httpStatus.OK).send({
+      status: "success",
+      message: "Sales order updated successfully",
+      updatedSalesorder: updatedSalesorder
+    });
+  } else {
+    res.status(httpStatus.CONFLICT).send({
+      status: "failure",
+      message: updatedSalesorder.Status
+    });
+  }
+});
+
 
 const deletesalesorder = catchAsync(async (req, res) => {
     const deleted = await Salesorderservices.deletesalesorderById(req.params.id);
@@ -121,8 +140,9 @@ module.exports = {
     createsalesorder,
     getallsalesorder,
     getsalesorderbyID,
-    updatesalesorder,
+    updateSalesorder,
     deletesalesorder,
     getsalesreport,
     getPaymentStatsummery,
+    updateSalesorderPaymentStatus
 };

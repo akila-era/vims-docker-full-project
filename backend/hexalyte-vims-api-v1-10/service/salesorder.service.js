@@ -92,7 +92,7 @@ const getsalesorderBYId = async (OrderId) => {
   return salesorder;
 };
 
-const updatesalesorderById = async (OrderId, updateBody) => {
+const updatesalesorderPayementStatusById = async (OrderId, updateBody) => {
   const {
     CustomerName,
     OrderDate,
@@ -115,6 +115,132 @@ const updatesalesorderById = async (OrderId, updateBody) => {
   });
   return row;
 };
+
+const updateSalesorderById = async (orderId, params) => {
+  const { OrderDate, TotalAmount, Status, LocationID, Discount, CustomerID, DiscountID, TransactionType, OrderItems } = params;
+
+  let response = {
+    SalesOrder: "",
+    Status: "",
+    UpdatedOrderItems: [],
+    InventoryTransactions: [],
+    ProductStorageUpdates: [],
+    ProductQuantityUpdates: [],
+  };
+
+  const existingOrder = await Salesorder.findByPk(orderId);
+  if (!existingOrder) {
+    response.Status = "Sales Order not found";
+    return response;
+  }
+
+  if (OrderItems.length === 0) {
+    response.Status = "No Order Items Found";
+    return response;
+  }
+
+  for (const soItem of OrderItems) {
+    const productStorageStock = await ProductStorage.findOne({
+      where: { ProductID: soItem.ProductID, LocationID }
+    });
+
+    if (!productStorageStock || Number(productStorageStock.Quantity) < soItem.Quantity) {
+      response.Status = `Not enough quantity available for Product #${soItem.ProductID} in Warehouse #${LocationID}`;
+      return response;
+    }
+  }
+
+  const transaction = await db.sequelize.transaction();
+  try {
+    const oldOrderItems = await SalesorderDetail.findAll({
+      where: { OrderId: orderId },
+      transaction
+    });
+
+    for (const oldItem of oldOrderItems) {
+      await ProductStorage.increment('Quantity', {
+        by: oldItem.Quantity,
+        where: { ProductID: oldItem.ProductID, LocationID: existingOrder.LocationID },
+        transaction
+      });
+
+      await Product.increment('QuantityInStock', {
+        by: oldItem.Quantity,
+        where: { ProductID: oldItem.ProductID },
+        transaction
+      });
+    }
+
+    await SalesorderDetail.destroy({
+      where: { OrderId: orderId },
+      transaction
+    });
+
+    await Inventory.destroy({
+      where: { SalesOrderID: orderId },
+      transaction
+    });
+
+    await Salesorder.update(
+      { OrderDate, TotalAmount, Status, LocationID, Discount, CustomerID, DiscountID },
+      { where: { OrderID: orderId }, transaction }
+    );
+
+    for (const soItem of OrderItems) {
+      const orderItem = await SalesorderDetail.create({
+        ...soItem,
+        OrderId: orderId
+      }, { transaction });
+
+      const inventoryTransaction = await Inventory.create({
+        SalesOrderID: orderId,
+        ProductID: soItem.ProductID,
+        Quantity: soItem.Quantity,
+        TransactionDate: OrderDate,
+        TransactionType
+      }, { transaction });
+
+      await ProductStorage.decrement('Quantity', {
+        by: soItem.Quantity,
+        where: { ProductID: soItem.ProductID, LocationID },
+        transaction
+      });
+
+      await Product.decrement('QuantityInStock', {
+        by: soItem.Quantity,
+        where: { ProductID: soItem.ProductID },
+        transaction
+      });
+
+      response.UpdatedOrderItems.push(orderItem);
+      response.InventoryTransactions.push(inventoryTransaction);
+    }
+
+    if (Status !== existingOrder.Status) {
+      await OrderStatusHistory.create({
+        salesorderOrderID: orderId,
+        StatusChangeDate: new Date(),
+        NewStatus: Status
+      }, { transaction });
+    }
+
+    await transaction.commit();
+
+    const updatedOrder = await Salesorder.findByPk(orderId);
+    response.SalesOrder = updatedOrder;
+    response.Status = "success";
+
+    return response;
+  } catch (error) {
+    await transaction.rollback();
+    response.Status = `Update failed: ${error.message}`;
+    return response;
+  }
+};
+
+
+
+
 
 const deletesalesorderById = async (OrderId) => {
   const salesorder = await getsalesorderBYId(OrderId);
@@ -200,7 +326,8 @@ module.exports = {
   createsalesorder,
   getallsalesorder,
   getsalesorderBYId,
-  updatesalesorderById,
+  updateSalesorderById,
   deletesalesorderById,
   getSalesReport,
+  updatesalesorderPayementStatusById
 };

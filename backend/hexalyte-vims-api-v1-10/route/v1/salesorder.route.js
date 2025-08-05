@@ -18,11 +18,11 @@ router
   .route('/:id')
   .get(auth(), salesorderController.getsalesorderbyID)
   .delete(auth(), validate(salesorderValidation.deletesalesorder), salesorderController.deletesalesorder) 
-  .put(auth(), validate(salesorderValidation.updatesalesorder), salesorderController.updatesalesorder); 
+  .put(auth(), salesorderController.updateSalesorder); 
 
-// router
-//   .route('/invoice')
-//   .post(auth(), salesorderInvoice.saveSalesOrderInvoice)
+router
+  .route('/paymentStatus/:id')
+  .post(auth(), salesorderController.updateSalesorderPaymentStatus)
 
 router
 .route('/report/sales')
