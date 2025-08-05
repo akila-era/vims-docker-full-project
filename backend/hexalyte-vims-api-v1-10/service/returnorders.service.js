@@ -36,11 +36,25 @@ const createReturnSalesOrder = async (params) => {
 
     for (const returnItem of ReturnItems) {
 
-        checkSalesOrderItems.find((soItem) => {
-            if (soItem.ProductID !== returnItem.ProductID) {
-                response.message = `${returnItem.ProductID} doesn't exists in the sales order`
-            }
-        })
+        // checkSalesOrderItems.find((soItem) => {
+        //     if (soItem.ProductID !== returnItem.ProductID) {
+        //         response.message = `Product ID: ${returnItem.ProductID} doesn't exists in the sales order`
+        //     } else if (soItem.Quantity <= returnItem.Quantity) {
+        //         response.message = `Product ID: ${returnItem.ProductID} doesn't exists in the sales order`
+        //     }
+        // })
+
+        const salesOrderItem = await SalesOrderDetails.findOne({ where: { ProductID: returnItem.ProductID } })
+
+        if (salesOrderItem == null) {
+            response.message = `No product with ${returnItem.ProductID} ID found in the sales order`
+            break
+        }
+
+        if (parseInt(salesOrderItem.Quantity) < parseInt(returnItem.Quantity)) {
+            response.message = `No available quantity of product ${returnItem.ProductID}`
+            break
+        }
 
     }
 
