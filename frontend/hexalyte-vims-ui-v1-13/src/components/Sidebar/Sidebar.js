@@ -659,6 +659,13 @@ export default function Sidebar() {
                   icon="fas fa-history"
                   isActive={isActive("/admin/order-history")}
                 />
+
+                <SidebarItem
+                  to="/admin/return-orders"
+                  text="Return Orders"
+                  icon="fas fa-history"
+                  isActive={isActive("/admin/return-orders")}
+                />
               </SidebarSection>
 
               <SidebarSection title="Products">

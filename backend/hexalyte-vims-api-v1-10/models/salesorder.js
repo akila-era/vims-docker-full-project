@@ -15,10 +15,13 @@ module.exports = (sequelize, DataTypes) => {
       salesorder.hasMany(models.orderstatushistory)
       salesorder.belongsToMany(models.product, {
         through: models.salesorderdetail,
-        foreignKey: 'OrderId'
+        foreignKey: 'OrderID'
       })
       salesorder.belongsTo(models.warehouselocation, { foreignKey: 'LocationID' })
       salesorder.belongsTo(models.customer, { foreignKey: "CustomerID" });
+
+      salesorder.hasMany(models.returnorders, {foreignKey: 'SalesOrderID'})
+
     }
   }
   salesorder.init({

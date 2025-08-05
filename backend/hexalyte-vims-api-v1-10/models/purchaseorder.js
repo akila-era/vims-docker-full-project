@@ -16,6 +16,9 @@ module.exports = (sequelize, DataTypes) => {
       //   through: models.purchaseorderdetail,
       //   foreignKey: 'OrderID'
       // })
+
+      purchaseorder.hasMany(models.returnorders, { foreignKey: 'PurchaseOrderID' })
+      
     }
   }
   purchaseorder.init({
