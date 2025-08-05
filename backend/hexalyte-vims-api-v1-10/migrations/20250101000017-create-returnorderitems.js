@@ -29,7 +29,12 @@ module.exports = {
 
             Quantity: {
                 type: Sequelize.INTEGER
+            },
+
+            Note: {
+                type: Sequelize.TEXT
             }
+
 
         });
     },

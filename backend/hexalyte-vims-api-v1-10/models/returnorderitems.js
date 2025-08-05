@@ -45,6 +45,10 @@ module.exports = (sequelize, DataTypes) => {
 
         Quantity: {
             type: DataTypes.INTEGER
+        },
+
+        Note: {
+            type: DataTypes.TEXT
         }
 
     }, {
