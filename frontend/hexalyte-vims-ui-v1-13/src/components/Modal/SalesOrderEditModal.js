@@ -38,6 +38,8 @@ const ProductSearchDropdown = ({
             }
         }
     }
+    // console.log(products)
+
 
     // Filter products based on search term
     useEffect(() => {
@@ -168,8 +170,8 @@ const ProductSearchDropdown = ({
             {/* Dropdown menu */}
             {isOpen && !disabled && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map((storageItem) => {
+                    {products.length > 0 ? (
+                        products.map((storageItem) => {
                             const product = products.find(p => p.ProductID === storageItem.ProductID);
                             if (!product) return null;
 
@@ -219,342 +221,197 @@ const ProductSearchDropdown = ({
 
 
 
-
-
-
-
-
-
-// Main SalesOrderEditModal Component
 function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
-    console.log(salseOrderInfo)
-    const [warehouses, setWarehouses] = useState([]);
-    const [customers, setCustomers] = useState([]);
-    const [productStorage, setProductStorage] = useState([]);
-    const [selectedStorage, setSelectedStorage] = useState([]);
-    const [products, setProducts] = useState([]);
-    const [orderItem, setOrderItem] = useState([]);
-    const [salesOrder, setSalesOrder] = useState({
-        OrderDate: new Date(),
-        CustomerID: 0,
-        TotalAmount: 0,
-        Status: "STORE PICKUP",
-        OrderType: "FULFILL",
-        LocationID: "0",
-        Discount: 0,
-        DiscountID: null,
-        PaymentStatus: 'UNPAID'
-    });
+  const [warehouses, setWarehouses] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [productStorage, setProductStorage] = useState([]);
+  const [selectedStorage, setSelectedStorage] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [orderItem, setOrderItem] = useState([]);
+  const [salesItems, setSalesItems] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
 
-    useEffect(() => {
-        const loadSalesOrderData = async () => {
-            const api = createAxiosInstance();
-            try {
-                const response = await api.get(
-                    `salesorderdetails/${salseOrderInfo.OrderID}`
-                );
-                if (response.status === 200) {
-                    setOrderItem(() => response.data.data);
-                }
-                console.log(response.data);
-            } catch (error) {
-                console.error("Failed to load purchase order details:", error);
-            }
-        };
+  console.log(salesItems)
 
-        loadSalesOrderData();
-    }, [salseOrderInfo.OrderID]);
-    const [salesItem, setSalesItem] = useState({
-        ProductID: "0",
-        SellingPrice: 0,
-        Quantity: 0,
-    });
-    const [salesItems, setSalesItems] = useState([]);
-    const [discounts, setDiscounts] = useState([])
+  const [salesOrder, setSalesOrder] = useState({
+    OrderDate: new Date(),
+    CustomerID: salseOrderInfo.CustomerID,
+    TotalAmount: 0,
+    Status: salseOrderInfo.Status,
+    OrderType: "FULFILL",
+    LocationID: salseOrderInfo.LocationID,
+    Discount: 0,
+    DiscountID: null,
+    PaymentStatus: "UNPAID",
+  });
 
-    function addSalesItem(e) {
-        e.preventDefault();
+  const [salesItem, setSalesItem] = useState({
+    ProductID: "0",
+    SellingPrice: 0,
+    Quantity: 0,
+  });
 
-        if (salesItem.ProductID === "0") {
-            Swal.fire({
-                icon: "warning",
-                title: "Select a Product",
-                background: "#f8fafc",
-                confirmButtonColor: "#3b82f6"
-            });
-            return;
-        } else if (salesItem.Quantity <= 0) {
-            Swal.fire({
-                icon: "warning",
-                title: "Enter a Quantity",
-                background: "#f8fafc",
-                confirmButtonColor: "#3b82f6"
-            });
-            return;
-        } else if (
-            salesItem.Quantity >
-            selectedStorage.find((product) => product.ProductID.toString() === salesItem.ProductID).Quantity &&
-            salesOrder.OrderType === "FULFILL"
-        ) {
-            Swal.fire({
-                icon: "warning",
-                title: "Quantity not available",
-                background: "#f8fafc",
-                confirmButtonColor: "#3b82f6"
-            });
-            return;
-        } else if (salesItems.find((i) => i.ProductID.toString() === salesItem.ProductID)) {
-            if (
-                (Number(salesItem.Quantity) +
-                    Number(salesItems.find((i) => i.ProductID.toString() === salesItem.ProductID).Quantity)) >
-                selectedStorage.find((product) => product.ProductID.toString() === salesItem.ProductID).Quantity &&
-                salesOrder.OrderType === "FULFILL"
-            ) {
-                Swal.fire({
-                    icon: "warning",
-                    title: "Quantity not available",
-                    background: "#f8fafc",
-                    confirmButtonColor: "#3b82f6"
-                });
-                return;
-            }
-        }
+  useEffect(() => {
+    const fetchData = async () => {
+      const api = createAxiosInstance();
+      const [productRes, warehouseRes, customerRes, discountRes, storageRes] = await Promise.all([
+        api.get("product"),
+        api.get("location"),
+        api.get("customer"),
+        api.get("discounts/sales"),
+        api.get("productstorage"),
+      ]);
 
-        const item = {
-            ProductID: salesItem.ProductID,
-            ProductName: products.find(product => product.ProductID.toString() === salesItem.ProductID).Name,
-            Quantity: salesItem.Quantity,
-            UnitPrice: salesItem.SellingPrice,
-            TotalPrice: salesItem.Quantity * salesItem.SellingPrice
-        };
-
-        if (salesItems.find(s => s.ProductID === item.ProductID)) {
-            setSalesItems((s) => {
-                return s.map((i) =>
-                    i.ProductID === item.ProductID
-                        ? {
-                            ...i,
-                            Quantity: Number(i.Quantity) + Number(item.Quantity),
-                            TotalPrice: i.UnitPrice * (Number(i.Quantity) + Number(item.Quantity))
-                        }
-                        : i
-                );
-            });
-        } else {
-            setSalesItems((s) => [...s, item]);
-        }
-
-        setSalesItem(() => ({
-            ProductID: "0",
-            SellingPrice: 0,
-            Quantity: 0,
-        }));
-    }
-
-    function deleteSalesItem(ProductID) {
-        setSalesItems((s) => s.filter((i) => i.ProductID !== ProductID));
-    }
-
-
-    async function addSalesOrder() {
-
-        if (salesItems.length === 0) {
-            Swal.fire({
-                title: "Error",
-                text: "Add at least one product",
-                icon: "error",
-                background: "#f8fafc",
-                confirmButtonColor: "#3b82f6"
-            });
-            return;
-        }
-
-        try {
-
-            const newSalesOrder = {
-                CustomerID: salesOrder.CustomerID,
-                OrderDate: salesOrder.OrderDate,
-                Status: salesOrder.Status,
-                Discount: salesOrder.Discount,
-                DiscountID: salesOrder.DiscountID,
-                LocationID: salesOrder.LocationID,
-                PaymentStatus: salesOrder.PaymentStatus,
-                TotalAmount: salesOrder.TotalAmount,
-                TransactionType: salesOrder.OrderType,
-                OrderItems: salesItems
-            }
-
-            const api = createAxiosInstance()
-            const salesOrderRes = await api.post('salesorder', newSalesOrder)
-
-            Swal.fire({
-                title: "Success",
-                text: "Sales Order Placed. Do you want to Print an Invoice ?",
-                icon: "success",
-                showCancelButton: true,
-                confirmButtonColor: "#74BF04",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Print Invoice"
-            }).then((result) => {
-                if (result.isConfirmed) {
-
-                    if (salesOrderRes?.data?.newsalesorder) {
-                        handlePrint(salesOrderRes?.data?.newsalesorder?.SalesOrder)
-                    }
-
-                }
-            });
-
-            setOpenEditSalesOrderModal(() => null);
-            console.log(salesOrderRes)
-
-        } catch (error) {
-            console.log(error)
-            Swal.fire({
-                title: "Error",
-                text: "Something went wrong",
-                icon: "error",
-                background: "#f8fafc",
-                confirmButtonColor: "#3b82f6"
-            });
-        }
-
-    }
-
-    async function fetchProducts() {
-        const api = createAxiosInstance();
-        try {
-            const products = await api.get(`product`);
-
-            if (products.status === 200) {
-                setProducts(() => products.data.allProducts.filter(product => product.isActive !== false));
-            }
-        } catch (error) {
-            if (error.status === 404 && error.response.data.message === "No Products Found") {
-                console.log("No Products Found");
-            } else {
-                console.log(error)
-            }
-        }
-    }
-
-    async function fetchWarehouses() {
-        try {
-            const api = createAxiosInstance();
-            const warehousesResp = await api.get(`location`);
-            if (warehousesResp.status === 200) {
-                setWarehouses(() => warehousesResp.data.locations);
-            }
-        } catch (error) {
-            if (error.status === 404 && error.response.data.message === "no location found") {
-                console.log("no location found");
-            } else {
-                console.log(error)
-            }
-        }
-    }
-
-    async function fetchCustomers() {
-        try {
-            const api = createAxiosInstance();
-            const customersRes = await api.get(`customer`)
-            if (customersRes.status === 200) {
-                setCustomers(() => customersRes.data.allCustomers)
-            }
-        } catch (error) {
-            if (error.status === 404 && error.response.data.message === "No Customers Found") {
-                console.log("No Customers Found");
-            } else {
-                console.log(error)
-            }
-        }
-    }
-
-    async function fetchProductStorages() {
-        try {
-            const api = createAxiosInstance();
-            const productStoragesRes = await api.get(`productstorage`);
-            if (productStoragesRes.status === 200) {
-                setProductStorage(() => productStoragesRes.data);
-            }
-        } catch (error) {
-            if (error.status === 404 && error.response.data.message === "No Product storages found") {
-                console.log("No Product storages found");
-            } else {
-                console.log(error)
-            }
-        }
-    }
-
-    async function fetchDiscounts() {
-        try {
-            const api = createAxiosInstance();
-            const discountsRes = await api.get(`discounts/sales`)
-            if (discountsRes.status === 200) {
-                console.log(discountsRes.data.discounts.filter(discount => discount.isActive === true))
-                setDiscounts(() => discountsRes.data.discounts.filter(discount => discount.isActive !== false))
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-    useEffect(() => {
-        fetchProducts();
-        fetchWarehouses();
-        fetchProductStorages();
-        fetchCustomers();
-        fetchDiscounts();
-    }, []);
-
-    useEffect(() => {
-        setSalesItems(() => []);
-        if (salesOrder.LocationID === "0") return;
-
-        fetchProductStorages();
-        setSelectedStorage(() => productStorage.filter((ps) => ps.LocationID.toString() === salesOrder.LocationID));
-    }, [salesOrder.LocationID]);
-
-    useEffect(() => {
-        if (salesItem.ProductID === "0") {
-            setSalesItem((si) => ({ ...si, SellingPrice: 0 }));
-        } else {
-            setSalesItem((si) => ({
-                ...si,
-                SellingPrice: products.find((product) => product.ProductID.toString() === salesItem.ProductID).SellingPrice
-            }));
-        }
-    }, [salesItem.ProductID]);
-
-    useEffect(() => {
-        const total = salesItems.reduce((sum, item) => sum + item.TotalPrice, 0) - Number(salesOrder.Discount);
-        setSalesOrder((s) => ({ ...s, TotalAmount: total }));
-    }, [salesItems, salesOrder.Discount]);
-
-    // Update sales order
-    const updateSalesOrder = async () => {
-        try {
-            const updatedOrder = {
-                OrderDate: salesOrder.OrderDate,
-                CustomerID: salesOrder.CustomerID,
-                TotalAmount: salesOrder.TotalAmount,
-                Status: salesOrder.Status,
-                Discount: salesOrder.Discount,
-                DiscountID: salesOrder.DiscountID,
-                LocationID: salesOrder.LocationID,
-                PaymentStatus: salesOrder.PaymentStatus,
-                TransactionType: salesOrder.OrderType,
-                OrderItems: salesItems
-            };
-            const api = createAxiosInstance();
-            await api.put(`salesorder/${salseOrderInfo.OrderID}`, updatedOrder);
-            Swal.fire("Success", "Sales order updated successfully", "success").then(() => {
-                setOpenEditSalesOrderModal(false);
-            });
-        } catch (error) {
-            Swal.fire("Error", "Failed to update sales order", "error");
-        }
+      setProducts(productRes.data.allProducts.filter(p => p.isActive));
+      setWarehouses(warehouseRes.data.locations);
+      setCustomers(customerRes.data.allCustomers);
+      setDiscounts(discountRes.data.discounts.filter(d => d.isActive));
+      setProductStorage(storageRes.data);
     };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrderItems = async () => {
+      const api = createAxiosInstance();
+      const res = await api.get(`salesorderdetails/${salseOrderInfo.OrderID}`);
+      setOrderItem(res.data.data);
+    };
+
+    fetchOrderItems();
+  }, [salseOrderInfo.OrderID]);
+
+  useEffect(() => {
+    if (!orderItem.length || !products.length || !productStorage.length) return;
+
+    const merged = orderItem.map(item => {
+      const product = products.find(p => p.ProductID === item.ProductID);
+      const storage = productStorage.find(
+        ps => ps.ProductID === item.ProductID && ps.LocationID.toString() === salseOrderInfo.LocationID
+      );
+
+      return {
+        ProductID: item.ProductID.toString(),
+        ProductName: product?.Name || '',
+        Quantity: item.Quantity,
+        UnitPrice: item.UnitPrice,
+        TotalPrice: item.Quantity * item.UnitPrice,
+        Stock: storage?.Quantity || 0
+      };
+    });
+
+    setSalesItems(merged);
+  }, [orderItem, products, productStorage, salseOrderInfo.LocationID]);
+
+  useEffect(() => {
+    if (salesOrder.LocationID === "0") return;
+    const storage = productStorage.filter(
+      ps => ps.LocationID.toString() === salesOrder.LocationID
+    );
+    setSelectedStorage(storage);
+  }, [salesOrder.LocationID, productStorage]);
+
+  useEffect(() => {
+    const total = salesItems.reduce((sum, item) => sum + item.TotalPrice, 0) - Number(salesOrder.Discount);
+    setSalesOrder(s => ({ ...s, TotalAmount: total }));
+  }, [salesItems, salesOrder.Discount]);
+
+  useEffect(() => {
+    if (salesItem.ProductID === "0") return;
+    const selectedProduct = products.find(p => p.ProductID.toString() === salesItem.ProductID);
+    if (selectedProduct) {
+      setSalesItem(si => ({ ...si, SellingPrice: selectedProduct.SellingPrice }));
+    }
+  }, [salesItem.ProductID, products]);
+
+  const addSalesItem = (e) => {
+    e.preventDefault();
+    const selected = selectedStorage.find(p => p.ProductID.toString() === salesItem.ProductID);
+    const availableQty = selected?.Quantity || 0;
+
+    if (salesItem.ProductID === "0" || salesItem.Quantity <= 0) {
+      Swal.fire({ icon: "warning", title: "Invalid Product or Quantity" });
+      return;
+    }
+
+    if (salesItem.Quantity > availableQty && salesOrder.OrderType === "FULFILL") {
+      Swal.fire({ icon: "warning", title: "Quantity not available" });
+      return;
+    }
+
+    const existing = salesItems.find(i => i.ProductID === salesItem.ProductID);
+    const newQty = existing ? Number(existing.Quantity) + Number(salesItem.Quantity) : Number(salesItem.Quantity);
+
+    if (newQty > availableQty && salesOrder.OrderType === "FULFILL") {
+      Swal.fire({ icon: "warning", title: "Quantity exceeds available stock" });
+      return;
+    }
+
+    const newItem = {
+      ProductID: salesItem.ProductID,
+      ProductName: products.find(p => p.ProductID.toString() === salesItem.ProductID)?.Name || '',
+      Quantity: salesItem.Quantity,
+      UnitPrice: salesItem.SellingPrice,
+      TotalPrice: salesItem.Quantity * salesItem.SellingPrice,
+    };
+
+    if (existing) {
+      setSalesItems(items => items.map(item =>
+        item.ProductID === salesItem.ProductID
+          ? { ...item, Quantity: newQty, TotalPrice: newQty * item.UnitPrice }
+          : item
+      ));
+    } else {
+      setSalesItems(items => [...items, newItem]);
+    }
+
+    setSalesItem({ ProductID: "0", SellingPrice: 0, Quantity: 0 });
+  };
+
+  const addSalesOrder = async () => {
+    if (!salesItems.length) {
+      Swal.fire({ icon: "error", title: "Add at least one product" });
+      return;
+    }
+
+    try {
+      const api = createAxiosInstance();
+      const updatedOrder = {
+        ...salesOrder,
+        TransactionType: salesOrder.OrderType,
+        OrderItems: salesItems
+      };
+
+      console.log(updatedOrder)
+
+      const res = await api.put(`salesorder/update/${salseOrderInfo.OrderID}`, updatedOrder);
+      console.log(res)
+      Swal.fire({
+        title: "Success",
+        text: "Order updated. Print invoice?",
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Print Invoice"
+      }).then(result => {
+        if (result.isConfirmed && res.data?.newsalesorder) {
+          handlePrint(res.data.newsalesorder.SalesOrder);
+        }
+      });
+
+      setOpenEditSalesOrderModal(false);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({ icon: "error", title: "Something went wrong" });
+    }
+  };
+
+  const deleteSalesItem = ProductID => {
+    setSalesItems(items => items.filter(i => i.ProductID !== ProductID));
+  };
+
+
+
 
     return (
         <>
@@ -600,8 +457,8 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                         <div className="relative">
                                             <select
                                                 className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white"
-                                                value={salseOrderInfo.LocationID}
-                                            // onChange={(e) => setSalesOrder((s) => ({ ...s, LocationID: e.target.value }))}
+                                                value={salesOrder.LocationID}
+                                                onChange={(e) => setSalesOrder((s) => ({ ...s, LocationID: e.target.value }))}
                                             >
                                                 <option value="0">Select Warehouse</option>
                                                 {warehouses.map((warehouse) => (
@@ -623,7 +480,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                         <div className="relative flex gap-3">
                                             <select
                                                 className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white"
-                                                value={salseOrderInfo.CustomerID}
+                                                value={salesOrder.CustomerID}
                                                 onChange={(e) => setSalesOrder((s) => ({ ...s, CustomerID: e.target.value }))}
                                             >
                                                 <option value="0">Select Customer</option>
@@ -633,35 +490,25 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                     </option>
                                                 ))}
                                             </select>
+
+                                            <Link
+                                                className=" w-3/12 flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 disabled:bg-blue-300"
+                                                to="manage-customers"
+                                            >
+                                                <i className="fas fa-user-plus"></i>
+                                            </Link>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order Type</label>
-                                        <div className="relative">
-                                            <select
-                                                className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                value={salseOrderInfo.OrderType}
-                                                onChange={(e) => setSalesOrder((s) => ({ ...s, OrderType: e.target.value }))}
-                                            >
-                                                <option value="FULFILL">FULFILL</option>
-                                                <option value="RETURN">RETURN</option>
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                                {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                        </svg> */}
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
                                         <div className="relative">
                                             <select
                                                 className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                value={salseOrderInfo.Status}
+                                                value={salesOrder.Status}
                                                 onChange={(e) => setSalesOrder((s) => ({ ...s, Status: e.target.value }))}
+                                                disabled={salesOrder.LocationID === "0"}
                                             >
                                                 <option value="STORE PICKUP">Store Pickup</option>
                                                 <option value="TO DELIVER">To Deliver</option>
@@ -670,10 +517,9 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                             </div>
                                         </div>
                                     </div>
-
+                                   
                                 </div>
                             </div>
-
 
                             {/* Add Product Form */}
                             <div className="mb-8">
@@ -691,6 +537,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                 selectedStorage={selectedStorage}
                                                 salesItem={salesItem}
                                                 setSalesItem={setSalesItem}
+                                                disabled={salesOrder.LocationID === "0"}
                                             />
                                         </div>
 
@@ -712,6 +559,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                 placeholder="Enter Quantity"
                                                 value={salesItem.Quantity}
                                                 onChange={(e) => setSalesItem((si) => ({ ...si, Quantity: e.target.value }))}
+                                                disabled={salesOrder.LocationID === "0"}
                                             />
                                         </div>
 
@@ -753,34 +601,22 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {orderItem.length > 0 ? (
-                                                orderItem.map((detail, index) => (
+                                            {salesItems.length > 0 ? (
+                                                salesItems.map((unit, index) => (
                                                     <motion.tr
                                                         key={index}
                                                         initial={{ opacity: 0, y: 10 }}
                                                         animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                                                        transition={{ duration: 0.3 }}
                                                     >
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{detail.ProductId}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            {products.find((p) => p.ProductID === detail.ProductId)?.Name || 'Loading...'}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{detail.Quantity}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                            {Number(detail.UnitPrice).toLocaleString(undefined, {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2
-                                                            })} LKR
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                                                            {Number(detail.Quantity * detail.UnitPrice).toLocaleString(undefined, {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2
-                                                            })} LKR
-                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{unit.ProductID}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{unit.ProductName}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.Quantity}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.UnitPrice.toLocaleString()}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.TotalPrice.toLocaleString()}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                                                             <button
-                                                                onClick={() => deleteSalesItem(detail.ProductID)}
+                                                                onClick={() => deleteSalesItem(unit.ProductID)}
                                                                 className="text-red-600 hover:text-red-900 transition duration-200"
                                                             >
                                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -792,19 +628,15 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan="5" className="px-6 py-4 text-sm text-gray-500 text-center">
-                                                        No products found for this order
+                                                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                                                        No items added yet
                                                     </td>
                                                 </tr>
                                             )}
                                         </tbody>
-
-
-
                                     </table>
                                 </div>
                             </div>
-
 
                             <div className="bg-gray-50 p-4 rounded-lg mb-6">
                                 <div className="flex flex-wrap items-end justify-between gap-4">
@@ -823,10 +655,9 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                     disabled={salesOrder.LocationID === "0"}
                                                     placeholder="0"
                                                 />
-                                                {/* <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">LKR</span> */}
                                             </div>
                                         </div>
-                                        {/* Compact Predefined Discount Dropdown */}
+
                                         <div className="flex flex-col min-w-[200px]">
                                             <DiscountDropdown
                                                 availableDiscounts={discounts}
@@ -879,7 +710,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                Update Sales Order
+                                Create Sales Order
                             </button>
                         </div>
                     </div>
