@@ -385,7 +385,10 @@ const createReturnSalesOrder = async (params) => {
                 message: 'Return order created successfully',
                 data: {
                     returnOrder,
-                    returnOrderDetails
+                    returnOrderDetails,
+                    inventoryTransactionDetails,
+                    productStorageDetails,
+                    productQuantityDetails
                 }
             };
 
