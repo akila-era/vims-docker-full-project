@@ -22,17 +22,17 @@ const createsalesorder = catchAsync(async (req, res) => {
 
 const getallsalesorder = catchAsync(async (req, res) => {
     const salesorders = await Salesorderservices.getallsalesorder();
-    if(salesorders.length==0){
-        res.status(httpStatus.NOT_FOUND).send({
-            message:"no sales orders found"
-        })
-    }
-   return res.status(httpStatus.OK).send({
-        status: "success",
-        message: "Sales orders retrieved successfully",
-        salesorders
-    });
-    // res.send({salesorders})
+//     if(salesorders.length==0){
+//         res.status(httpStatus.NOT_FOUND).send({
+//             message:"no sales orders found"
+//         })
+//     }
+//    return res.status(httpStatus.OK).send({
+//         status: "success",
+//         message: "Sales orders retrieved successfully",
+//         salesorders
+//     });
+    res.send({salesorders})
 });
 
 const getsalesorderbyID = catchAsync(async (req, res) => {
