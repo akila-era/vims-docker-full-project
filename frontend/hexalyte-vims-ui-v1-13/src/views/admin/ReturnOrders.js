@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, ChevronDown, Package, Calendar, DollarSign, User, ArrowLeft, Eye, Check, X, Clock, AlertCircle } from 'lucide-react';
+import { Search, Filter, ChevronDown, Package, Calendar, DollarSign, User, ArrowLeft, Eye, Check, X, Clock, AlertCircle, PlusCircle } from 'lucide-react';
 import { createAxiosInstance } from 'api/axiosInstance';
+import AddSalesReturnModal from 'components/Modal/AddSalesReturnModal';
 
 const ReturnOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReturn, setSelectedReturn] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [returnOrders, setReturnOrders] = useState([])
-  const [productMap, setProductMap] = useState([])
+  const [showAddModal, setShowAddModal] = useState(false)
 
   // Sample data matching your API structure
   // const returnOrders = [
@@ -260,11 +260,10 @@ const ReturnOrders = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {selectedReturn.returnorderitems.map((item) => {
-                    const product = productMap[item.ProductID] || { name: `Product ${item.ProductID}`, price: 0 };
                     return (
                       <tr key={item.id}>
                         <td className="px-4 py-3 text-sm font-mono">{item.ProductID}</td>
-                        <td className="px-4 py-3 text-sm">{product.name}</td>
+                        <td className="px-4 py-3 text-sm">{item.product.Name}</td>
                         <td className="px-4 py-3 text-sm">{item.Quantity}</td>
                         <td className="px-4 py-3 text-sm">
                           {item.Note ? (
@@ -274,7 +273,7 @@ const ReturnOrders = () => {
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-right">
-                          ${(product.price * item.Quantity).toFixed(2)}
+                          {(Number(item.product.SellingPrice) * Number(item.Quantity))} LKR
                         </td>
                       </tr>
                     );
@@ -331,11 +330,11 @@ const ReturnOrders = () => {
 
           <div className="flex gap-2">
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              onClick={() => setShowAddModal(true)}
+              className="px-3 py-2 border text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
-              <Filter className="w-4 h-4" />
-              Filters
+              <PlusCircle className="w-4 h-4" />
+              Add Return
             </button>
           </div>
         </div>
@@ -430,6 +429,8 @@ const ReturnOrders = () => {
           </tbody>
         </table>
       </div>
+
+      <AddSalesReturnModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
 
       {filteredReturns.length === 0 && (
         <div className="text-center py-12">
