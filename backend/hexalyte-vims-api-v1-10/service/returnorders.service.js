@@ -231,7 +231,10 @@ const getAllReturnOrders = async () => {
 
     const allReturnOrders = await ReturnOrders.findAll({
         include: [{
-            model: ReturnOrderItems
+            model: ReturnOrderItems,
+            include: [{
+                model: Product
+            }]
         }]
     });
 
