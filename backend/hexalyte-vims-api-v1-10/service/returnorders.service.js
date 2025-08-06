@@ -3,6 +3,9 @@ const SalesOrders = db.salesorder
 const SalesOrderDetails = db.salesorderdetail
 const ReturnOrders = db.returnorders
 const ReturnOrderItems = db.returnorderitems
+const InventoryTransaction = db.inventorytransaction
+const ProductStorage = db.productstorage
+const Product = db.product
 const User = db.user
 
 // const createReturnSalesOrder = async (params) => {
@@ -327,6 +330,9 @@ const createReturnSalesOrder = async (params) => {
 
             // Create return order details
             const returnOrderDetails = [];
+            const inventoryTransactionDetails = []
+            const productStorageDetails = []
+            const productQuantityDetails = []
             for (const returnItem of ReturnItems) {
                 const salesOrderItem = salesOrderItems.find(item =>
                     item.ProductID === returnItem.ProductID
@@ -342,6 +348,33 @@ const createReturnSalesOrder = async (params) => {
                 }, { transaction });
 
                 returnOrderDetails.push(returnOrderDetail);
+
+                const inventoryTransactionDetail = await InventoryTransaction.create({
+                    SalesOrderID,
+                    ProductID: returnItem.ProductID,
+                    Quantity: returnItem.Quantity,
+                    TransactionDate: ReturnDate,
+                    TransactionType: 'RETURN'
+                }, { transaction })
+
+                inventoryTransactionDetails.push(inventoryTransactionDetail)
+
+                const productStorageUpdate = await ProductStorage.increment('Quantity', {
+                    by: returnItem.Quantity,
+                    where: { ProductID: returnItem.ProductID, LocationID: salesOrder.LocationID },
+                    transaction
+                })
+
+                productStorageDetails.push(productStorageUpdate)
+
+                const productQuantityUpdate = await Product.increment('QuantityInStock', {
+                    by: returnItem.Quantity,
+                    where: { ProductID: returnItem.ProductID },
+                    transaction
+                })
+
+                productQuantityDetails.push(productQuantityUpdate)
+
             }
 
             // Commit transaction
