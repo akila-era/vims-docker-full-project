@@ -227,6 +227,20 @@ const User = db.user
 //     }
 // };
 
+const getAllReturnOrders = async () => {
+
+    const allReturnOrders = await ReturnOrders.findAll({
+        include: [{
+            model: ReturnOrderItems
+        }]
+    });
+
+    if (allReturnOrders == null || allReturnOrders.length == 0) return `no return orders found`
+
+    return allReturnOrders
+
+}
+
 const createReturnSalesOrder = async (params) => {
     const { SalesOrderID, ReturnDate, Reason, CreatedBy, ReturnItems } = params;
 
@@ -448,7 +462,7 @@ const getReturnSummary = async (salesOrderId) => {
     }
 };
 
-module.exports = { createReturnSalesOrder }
+module.exports = { createReturnSalesOrder, getAllReturnOrders }
 
 /* {
     "newReturnSalesOrder": {
