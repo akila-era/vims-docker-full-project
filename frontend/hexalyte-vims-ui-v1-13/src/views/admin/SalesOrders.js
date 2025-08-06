@@ -440,7 +440,7 @@ function SalesOrders() {
         // );
 
         const api = createAxiosInstance();
-        const updateReq = await api.post(`salesorder/paymentStatus/${order.OrderID}`, newStatus)
+        const updateReq = await api.put(`salesorder/${order.OrderID}`, newStatus)
 
         // console.log(updateReq)
 
