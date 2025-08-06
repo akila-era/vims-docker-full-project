@@ -80,16 +80,7 @@ const createsalesorder = async (params) => {
 
 const getallsalesorder = async () => {
   try {
-    const salesorder = await Salesorder.findAll({
-      include: [{
-        model: SalesorderDetail,
-        required: true,
-        include: [{
-          model: Product,
-          required: true
-        }]
-      }]
-    });
+    const salesorder = await Salesorder.findAll();
     return salesorder;
   } catch (error) {
     console.log(error);
