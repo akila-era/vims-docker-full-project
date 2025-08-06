@@ -83,8 +83,10 @@ const getallsalesorder = async () => {
     const salesorder = await Salesorder.findAll({
       include: [{
         model: SalesorderDetail,
+        required: true,
         include: [{
-          model: Product
+          model: Product,
+          required: true
         }]
       }]
     });
