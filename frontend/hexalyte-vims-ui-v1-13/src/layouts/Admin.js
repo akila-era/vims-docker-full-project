@@ -30,6 +30,7 @@ import Reports from "views/admin/Reports";
 import Discounts from "views/admin/Discounts"
 import OrderHistory from "views/admin/OrderHistory";
 import WarehouseStockTransfer from "views/admin/WarehouseStockTransfer";
+import ReturnOrders from "views/admin/ReturnOrders";
 
 export default function Admin() {
   return (
@@ -46,6 +47,7 @@ export default function Admin() {
             <Route path="/admin/sales-orders/:id" exact component={SalesOrders}/>
             <Route path="/admin/purchase-orders" exact component={PurchaseOrders} />
             <Route path="/admin/track-orders" exact component={TrackOrders} />
+            <Route path="/admin/return-orders" exact component={ReturnOrders} />
             <Route path="/admin/manage-products" exact component={ManageProducts} />
             <Route path="/admin/manage-categories" exact component={ManageCategories} />
             <Route path="/admin/manage-inventory" exact component={ManageInventory} />

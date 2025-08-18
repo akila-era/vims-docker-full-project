@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     Quantity: DataTypes.INTEGER,
     TransactionDate: DataTypes.DATE,
-    TransactionType: DataTypes.ENUM('FULFILL', 'RETURN')
+    TransactionType: DataTypes.ENUM('FULFILL', 'RETURN' , 'EXCHANGE')
   }, {
     sequelize,
     modelName: 'inventorytransaction',

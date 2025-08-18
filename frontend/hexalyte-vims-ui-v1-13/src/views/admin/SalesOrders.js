@@ -371,9 +371,6 @@ function SalesOrders() {
     printWindow.document.close();
   };
 
-  function deleteSalesOrder() {
-    // Function implementation
-  }
 
   async function loadSalesOrders() {
 
@@ -386,7 +383,10 @@ function SalesOrders() {
       const response = await api.get('salesorder')
 
       if (response.status === 200) {
-        setSalesOrders(() => response.data.salesorders);
+        // setSalesOrders(() => response.data.salesorders);
+
+      setSalesOrders(() => response.data.salesorders.filter(order => order.isActive !== false));
+
       }
       setIsLoading(false);
     } catch (error) {
@@ -637,6 +637,19 @@ function SalesOrders() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
+
+          <button
+            className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-opacity-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteSalesOrder(row);
+            }}
+            title="Delete Order"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       ),
       button: `true`,
@@ -650,6 +663,53 @@ function SalesOrders() {
     return () => { };
 
   }, []);
+
+  async function deleteSalesOrder(salesOrderRow) {
+    try {
+      Swal.fire({
+        title: "Confirm Delete",
+        text: `Are you sure to delete the sales order (ID: ${salesOrderRow.OrderID})?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          async function deleteSalesOrderRequest(order) {
+            try {
+              // const deleteReq = await axios.delete(
+              //   `${BASE_URL}product/${product.ProductID}`, { withCredentials: true }
+              // );
+
+              const api = createAxiosInstance()
+              const deleteReq = await api.delete(`salesorder/${order.OrderID}`)
+              console.log(deleteReq)
+              if (deleteReq.status === 200) {
+                Swal.fire({
+                  title: "Deleted!",
+                  text: "Sales Order has been deleted successfully",
+                  icon: "success",
+                });
+                loadSalesOrders();
+              }
+            } catch (error) {
+              console.log(error);
+              Swal.fire({
+                title: "Error",
+                text: "Failed to delete Sales Order",
+                icon: "error",
+              });
+            }
+          }
+
+          deleteSalesOrderRequest(salesOrderRow);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
 
   return (

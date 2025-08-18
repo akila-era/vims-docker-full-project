@@ -22,17 +22,17 @@ const createsalesorder = catchAsync(async (req, res) => {
 
 const getallsalesorder = catchAsync(async (req, res) => {
     const salesorders = await Salesorderservices.getallsalesorder();
-    if(salesorders.length==0){
-        res.status(httpStatus.NOT_FOUND).send({
-            message:"no sales orders found"
-        })
-    }
-   return res.status(httpStatus.OK).send({
-        status: "success",
-        message: "Sales orders retrieved successfully",
-        salesorders
-    });
-    // res.send({salesorders})
+//     if(salesorders.length==0){
+//         res.status(httpStatus.NOT_FOUND).send({
+//             message:"no sales orders found"
+//         })
+//     }
+//    return res.status(httpStatus.OK).send({
+//         status: "success",
+//         message: "Sales orders retrieved successfully",
+//         salesorders
+//     });
+    res.send({salesorders})
 });
 
 const getsalesorderbyID = catchAsync(async (req, res) => {
@@ -89,18 +89,14 @@ const updateSalesorder = catchAsync(async (req, res) => {
 
 
 const deletesalesorder = catchAsync(async (req, res) => {
-    const deleted = await Salesorderservices.deletesalesorderById(req.params.id);
-    if (!deleted) {
-        res.status(httpStatus.NOT_FOUND).send({
-            status: "failure",
-            message: "Sales order not found",
-        });
-        return;
+    const deletedSalesOrder = await Salesorderservices.deletesalesorderById(req.params.id);
+    if(deletedSalesOrder == 0){
+        return res.status(httpStatus.BAD_REQUEST).send({
+            message: `Invalid Sales Order Id. Sales Order Does Not exists`
+        })
     }
-    res.status(httpStatus.NO_CONTENT).send({
-        status: "success",
-        message: "Sales order deleted successfully",
-    });
+
+    return res.status(httpStatus.OK).send({deletedSalesOrder});
 });
 
 const getsalesreport = catchAsync(async (req, res)=>{

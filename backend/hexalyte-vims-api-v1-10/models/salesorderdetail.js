@@ -4,19 +4,19 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class salesorderdetail extends Model {
     static associate(models) {
-      salesorderdetail.belongsTo(models.salesorder, { foreignKey: 'OrderId' });
+      salesorderdetail.belongsTo(models.salesorder, { foreignKey: 'OrderID' });
       salesorderdetail.belongsTo(models.product, { foreignKey: 'ProductID' });
     }
   }
 
   salesorderdetail.init({
-    OrderId: {
+    OrderID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
       references: {
         model: 'salesorders',
-        key: 'OrderId'
+        key: 'OrderID'
       }
     },
     ProductID: {

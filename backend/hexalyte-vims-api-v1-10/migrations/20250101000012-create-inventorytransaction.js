@@ -39,7 +39,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       TransactionType: {
-        type: Sequelize.ENUM('FULFILL', 'RETURN')
+        type: Sequelize.ENUM('FULFILL', 'RETURN', 'EXCHANGE')
       },
       createdAt: {
         allowNull: false,
