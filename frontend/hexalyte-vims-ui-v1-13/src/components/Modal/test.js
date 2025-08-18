@@ -170,8 +170,8 @@ const ProductSearchDropdown = ({
             {/* Dropdown menu */}
             {isOpen && !disabled && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map((storageItem) => {
+                    {products.length > 0 ? (
+                        products.map((storageItem) => {
                             const product = products.find(p => p.ProductID === storageItem.ProductID);
                             if (!product) return null;
 
@@ -222,195 +222,193 @@ const ProductSearchDropdown = ({
 
 
 function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
-    const [warehouses, setWarehouses] = useState([]);
-    const [customers, setCustomers] = useState([]);
-    const [productStorage, setProductStorage] = useState([]);
-    const [selectedStorage, setSelectedStorage] = useState([]);
-    const [products, setProducts] = useState([]);
-    const [orderItem, setOrderItem] = useState([]);
-    const [salesItems, setSalesItems] = useState([]);
-    const [discounts, setDiscounts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [productStorage, setProductStorage] = useState([]);
+  const [selectedStorage, setSelectedStorage] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [orderItem, setOrderItem] = useState([]);
+  const [salesItems, setSalesItems] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
 
-    console.log(salesItems)
+  console.log(salesItems)
 
-    const [salesOrder, setSalesOrder] = useState({
-        OrderDate: new Date(),
-        CustomerID: salseOrderInfo.CustomerID,
-        TotalAmount: 0,
-        Status: salseOrderInfo.Status,
-        OrderType: "FULFILL",
-        LocationID: salseOrderInfo.LocationID,
-        Discount: 0,
-        DiscountID: null,
-        PaymentStatus: "UNPAID",
+  const [salesOrder, setSalesOrder] = useState({
+    OrderDate: new Date(),
+    CustomerID: salseOrderInfo.CustomerID,
+    TotalAmount: 0,
+    Status: salseOrderInfo.Status,
+    OrderType: "FULFILL",
+    LocationID: salseOrderInfo.LocationID,
+    Discount: 0,
+    DiscountID: null,
+    PaymentStatus: "UNPAID",
+  });
+
+  const [salesItem, setSalesItem] = useState({
+    ProductID: "0",
+    SellingPrice: 0,
+    Quantity: 0,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const api = createAxiosInstance();
+      const [productRes, warehouseRes, customerRes, discountRes, storageRes] = await Promise.all([
+        api.get("product"),
+        api.get("location"),
+        api.get("customer"),
+        api.get("discounts/sales"),
+        api.get("productstorage"),
+      ]);
+
+      setProducts(productRes.data.allProducts.filter(p => p.isActive));
+      setWarehouses(warehouseRes.data.locations);
+      setCustomers(customerRes.data.allCustomers);
+      setDiscounts(discountRes.data.discounts.filter(d => d.isActive));
+      setProductStorage(storageRes.data);
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrderItems = async () => {
+      const api = createAxiosInstance();
+      const res = await api.get(`salesorderdetails/${salseOrderInfo.OrderID}`);
+      setOrderItem(res.data.data);
+    };
+
+    fetchOrderItems();
+  }, [salseOrderInfo.OrderID]);
+
+  useEffect(() => {
+    if (!orderItem.length || !products.length || !productStorage.length) return;
+
+    const merged = orderItem.map(item => {
+      const product = products.find(p => p.ProductID === item.ProductID);
+      const storage = productStorage.find(
+        ps => ps.ProductID === item.ProductID && ps.LocationID.toString() === salseOrderInfo.LocationID
+      );
+
+      return {
+        ProductID: item.ProductID.toString(),
+        ProductName: product?.Name || '',
+        Quantity: item.Quantity,
+        UnitPrice: item.UnitPrice,
+        TotalPrice: item.Quantity * item.UnitPrice,
+        Stock: storage?.Quantity || 0
+      };
     });
 
-    // console.log(salesOrder.LocationID)
+    setSalesItems(merged);
+  }, [orderItem, products, productStorage, salseOrderInfo.LocationID]);
 
-    const [salesItem, setSalesItem] = useState({
-        ProductID: "0",
-        SellingPrice: 0,
-        Quantity: 0,
-    });
+  useEffect(() => {
+    if (salesOrder.LocationID === "0") return;
+    const storage = productStorage.filter(
+      ps => ps.LocationID.toString() === salesOrder.LocationID
+    );
+    setSelectedStorage(storage);
+  }, [salesOrder.LocationID, productStorage]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const api = createAxiosInstance();
-            const [productRes, warehouseRes, customerRes, discountRes, storageRes] = await Promise.all([
-                api.get("product"),
-                api.get("location"),
-                api.get("customer"),
-                api.get("discounts/sales"),
-                api.get("productstorage"),
-            ]);
+  useEffect(() => {
+    const total = salesItems.reduce((sum, item) => sum + item.TotalPrice, 0) - Number(salesOrder.Discount);
+    setSalesOrder(s => ({ ...s, TotalAmount: total }));
+  }, [salesItems, salesOrder.Discount]);
 
-            setProducts(productRes.data.allProducts.filter(p => p.isActive));
-            setWarehouses(warehouseRes.data.locations);
-            setCustomers(customerRes.data.allCustomers);
-            setDiscounts(discountRes.data.discounts.filter(d => d.isActive));
-            setProductStorage(storageRes.data);
-        };
+  useEffect(() => {
+    if (salesItem.ProductID === "0") return;
+    const selectedProduct = products.find(p => p.ProductID.toString() === salesItem.ProductID);
+    if (selectedProduct) {
+      setSalesItem(si => ({ ...si, SellingPrice: selectedProduct.SellingPrice }));
+    }
+  }, [salesItem.ProductID, products]);
 
-        fetchData();
-    }, []);
+  const addSalesItem = (e) => {
+    e.preventDefault();
+    const selected = selectedStorage.find(p => p.ProductID.toString() === salesItem.ProductID);
+    const availableQty = selected?.Quantity || 0;
 
-    useEffect(() => {
-        const fetchOrderItems = async () => {
-            const api = createAxiosInstance();
-            const res = await api.get(`salesorderdetails/${salseOrderInfo.OrderID}`);
-            setOrderItem(res.data.data);
-        };
+    if (salesItem.ProductID === "0" || salesItem.Quantity <= 0) {
+      Swal.fire({ icon: "warning", title: "Invalid Product or Quantity" });
+      return;
+    }
 
-        fetchOrderItems();
-    }, [salseOrderInfo.OrderID]);
+    if (salesItem.Quantity > availableQty && salesOrder.OrderType === "FULFILL") {
+      Swal.fire({ icon: "warning", title: "Quantity not available" });
+      return;
+    }
 
-    useEffect(() => {
-        if (!orderItem.length || !products.length || !productStorage.length) return;
+    const existing = salesItems.find(i => i.ProductID === salesItem.ProductID);
+    const newQty = existing ? Number(existing.Quantity) + Number(salesItem.Quantity) : Number(salesItem.Quantity);
 
-        const merged = orderItem.map(item => {
-            const product = products.find(p => p.ProductID === item.ProductID);
-            const storage = productStorage.find(
-                ps => ps.ProductID === item.ProductID && ps.LocationID.toString() === salseOrderInfo.LocationID
-            );
+    if (newQty > availableQty && salesOrder.OrderType === "FULFILL") {
+      Swal.fire({ icon: "warning", title: "Quantity exceeds available stock" });
+      return;
+    }
 
-            return {
-                ProductID: item.ProductID.toString(),
-                ProductName: product?.Name || '',
-                Quantity: item.Quantity,
-                UnitPrice: item.UnitPrice,
-                TotalPrice: item.Quantity * item.UnitPrice,
-                Stock: storage?.Quantity || 0
-            };
-        });
-
-        setSalesItems(merged);
-    }, [orderItem, products, productStorage, salseOrderInfo.LocationID]);
-
-    useEffect(() => {
-        if (salesOrder.LocationID === "0") return;
-        const storage = productStorage.filter(
-            ps => ps.LocationID === salesOrder.LocationID
-        );
-        setSelectedStorage(storage);
-    }, [salesOrder.LocationID, productStorage]);
-
-    useEffect(() => {
-        const total = salesItems.reduce((sum, item) => sum + item.TotalPrice, 0) - Number(salesOrder.Discount);
-        setSalesOrder(s => ({ ...s, TotalAmount: total }));
-    }, [salesItems, salesOrder.Discount]);
-
-    useEffect(() => {
-        if (salesItem.ProductID === "0") return;
-        const selectedProduct = products.find(p => p.ProductID.toString() === salesItem.ProductID);
-        if (selectedProduct) {
-            setSalesItem(si => ({ ...si, SellingPrice: selectedProduct.SellingPrice }));
-        }
-    }, [salesItem.ProductID, products]);
-
-    const addSalesItem = (e) => {
-        e.preventDefault();
-        const selected = selectedStorage.find(p => p.ProductID.toString() === salesItem.ProductID);
-        const availableQty = selected?.Quantity || 0;
-
-        if (salesItem.ProductID === "0" || salesItem.Quantity <= 0) {
-            Swal.fire({ icon: "warning", title: "Invalid Product or Quantity" });
-            return;
-        }
-
-        if (salesItem.Quantity > availableQty && salesOrder.OrderType === "FULFILL") {
-            Swal.fire({ icon: "warning", title: "Quantity not available" });
-            return;
-        }
-
-        const existing = salesItems.find(i => i.ProductID === salesItem.ProductID);
-        const newQty = existing ? Number(existing.Quantity) + Number(salesItem.Quantity) : Number(salesItem.Quantity);
-
-        if (newQty > availableQty && salesOrder.OrderType === "FULFILL") {
-            Swal.fire({ icon: "warning", title: "Quantity exceeds available stock" });
-            return;
-        }
-
-        const newItem = {
-            ProductID: salesItem.ProductID,
-            ProductName: products.find(p => p.ProductID.toString() === salesItem.ProductID)?.Name || '',
-            Quantity: salesItem.Quantity,
-            UnitPrice: salesItem.SellingPrice,
-            TotalPrice: salesItem.Quantity * salesItem.SellingPrice,
-        };
-
-        if (existing) {
-            setSalesItems(items => items.map(item =>
-                item.ProductID === salesItem.ProductID
-                    ? { ...item, Quantity: newQty, TotalPrice: newQty * item.UnitPrice }
-                    : item
-            ));
-        } else {
-            setSalesItems(items => [...items, newItem]);
-        }
-
-        setSalesItem({ ProductID: "0", SellingPrice: 0, Quantity: 0 });
+    const newItem = {
+      ProductID: salesItem.ProductID,
+      ProductName: products.find(p => p.ProductID.toString() === salesItem.ProductID)?.Name || '',
+      Quantity: salesItem.Quantity,
+      UnitPrice: salesItem.SellingPrice,
+      TotalPrice: salesItem.Quantity * salesItem.SellingPrice,
     };
 
-    const addSalesOrder = async () => {
-        if (!salesItems.length) {
-            Swal.fire({ icon: "error", title: "Add at least one product" });
-            return;
+    if (existing) {
+      setSalesItems(items => items.map(item =>
+        item.ProductID === salesItem.ProductID
+          ? { ...item, Quantity: newQty, TotalPrice: newQty * item.UnitPrice }
+          : item
+      ));
+    } else {
+      setSalesItems(items => [...items, newItem]);
+    }
+
+    setSalesItem({ ProductID: "0", SellingPrice: 0, Quantity: 0 });
+  };
+
+  const addSalesOrder = async () => {
+    if (!salesItems.length) {
+      Swal.fire({ icon: "error", title: "Add at least one product" });
+      return;
+    }
+
+    try {
+      const api = createAxiosInstance();
+      const updatedOrder = {
+        ...salesOrder,
+        TransactionType: salesOrder.OrderType,
+        OrderItems: salesItems
+      };
+
+      console.log(updatedOrder)
+
+      const res = await api.put(`salesorder/update/${salseOrderInfo.OrderID}`, updatedOrder);
+      console.log(res)
+      Swal.fire({
+        title: "Success",
+        text: "Order updated. Print invoice?",
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Print Invoice"
+      }).then(result => {
+        if (result.isConfirmed && res.data?.newsalesorder) {
+          handlePrint(res.data.newsalesorder.SalesOrder);
         }
+      });
 
-        try {
-            const api = createAxiosInstance();
-            const updatedOrder = {
-                ...salesOrder,
-                TransactionType: salesOrder.OrderType,
-                OrderItems: salesItems
-            };
+      setOpenEditSalesOrderModal(false);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({ icon: "error", title: "Something went wrong" });
+    }
+  };
 
-            console.log(updatedOrder)
-
-            const res = await api.put(`salesorder/update/${salseOrderInfo.OrderID}`, updatedOrder);
-            console.log(res)
-            Swal.fire({
-                title: "Success",
-                text: "Order updated. Print invoice?",
-                icon: "success",
-                showCancelButton: true,
-                confirmButtonText: "Print Invoice"
-            }).then(result => {
-                if (result.isConfirmed && res.data?.newsalesorder) {
-                    handlePrint(res.data.newsalesorder.SalesOrder);
-                }
-            });
-
-            setOpenEditSalesOrderModal(false);
-        } catch (error) {
-            console.error(error);
-            Swal.fire({ icon: "error", title: "Something went wrong" });
-        }
-    };
-
-    const deleteSalesItem = ProductID => {
-        setSalesItems(items => items.filter(i => i.ProductID !== ProductID));
-    };
+  const deleteSalesItem = ProductID => {
+    setSalesItems(items => items.filter(i => i.ProductID !== ProductID));
+  };
 
 
 
@@ -454,15 +452,29 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                     Order Information
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {/* Replace the warehouse dropdown with a display of the current warehouse */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse</label>
-                                        <div className="p-2 bg-gray-100 rounded-lg">
-                                            {warehouses.find(w => w.LocationID === salesOrder.LocationID)?.WarehouseName || 'Loading...'}
+                                        <div className="relative">
+                                            <select
+                                                className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white"
+                                                value={salesOrder.LocationID}
+                                                onChange={(e) => setSalesOrder((s) => ({ ...s, LocationID: e.target.value }))}
+                                            >
+                                                <option value="0">Select Warehouse</option>
+                                                {warehouses.map((warehouse) => (
+                                                    <option key={warehouse.LocationID} value={warehouse.LocationID}>
+                                                        {warehouse.WarehouseName}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                                {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                        </svg> */}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Rest of the form remains the same */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                                         <div className="relative flex gap-3">
@@ -488,6 +500,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                         </div>
                                     </div>
 
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
                                         <div className="relative">
@@ -495,12 +508,16 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                 className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
                                                 value={salesOrder.Status}
                                                 onChange={(e) => setSalesOrder((s) => ({ ...s, Status: e.target.value }))}
+                                                disabled={salesOrder.LocationID === "0"}
                                             >
                                                 <option value="STORE PICKUP">Store Pickup</option>
                                                 <option value="TO DELIVER">To Deliver</option>
                                             </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                            </div>
                                         </div>
                                     </div>
+                                   
                                 </div>
                             </div>
 
@@ -520,6 +537,7 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                                                 selectedStorage={selectedStorage}
                                                 salesItem={salesItem}
                                                 setSalesItem={setSalesItem}
+                                                disabled={salesOrder.LocationID === "0"}
                                             />
                                         </div>
 

@@ -15,10 +15,13 @@ module.exports = (sequelize, DataTypes) => {
       salesorder.hasMany(models.orderstatushistory)
       salesorder.belongsToMany(models.product, {
         through: models.salesorderdetail,
-        foreignKey: 'OrderId'
+        foreignKey: 'OrderID'
       })
       salesorder.belongsTo(models.warehouselocation, { foreignKey: 'LocationID' })
       salesorder.belongsTo(models.customer, { foreignKey: "CustomerID" });
+
+      salesorder.hasMany(models.returnorders, { foreignKey: 'SalesOrderID' })
+
     }
   }
   salesorder.init({
@@ -40,12 +43,16 @@ module.exports = (sequelize, DataTypes) => {
     Discount: DataTypes.DECIMAL,
     PaymentStatus: DataTypes.ENUM('UNPAID', 'PAID'),
     DiscountID: {
-        type: DataTypes.INTEGER,
-        references: {
-          model: 'discounts',
-          key: 'DiscountID'
-        }
-      },
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'discounts',
+        key: 'DiscountID'
+      }
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true
+    }
   }, {
     sequelize,
     modelName: 'salesorder',

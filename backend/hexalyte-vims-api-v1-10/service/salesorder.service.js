@@ -13,7 +13,7 @@ const OrderStatusHistory = db.orderstatushistory
 const createsalesorder = async (params) => {
 
   const { OrderDate, TotalAmount, Status, LocationID, Discount, CustomerID, PaymentStatus, DiscountID, TransactionType, OrderItems } = params;
-  const salesorder = { OrderDate, TotalAmount, Status, LocationID, Discount, CustomerID, PaymentStatus, DiscountID };
+  const salesorder = { OrderDate, TotalAmount, Status, LocationID, Discount, CustomerID, PaymentStatus, DiscountID , isActive: 1 };
 
   let response = {
     SalesOrder: "",
@@ -57,7 +57,7 @@ const createsalesorder = async (params) => {
       const newStock = Number(productStorageStock.Quantity) - Number(soItem.Quantity)
       const newProductStock = Number(productStock.QuantityInStock) - Number(soItem.Quantity)
 
-      const addSalesOrderItem = await SalesorderDetail.create({ ...soItem, OrderId: OrderID })
+      const addSalesOrderItem = await SalesorderDetail.create({ ...soItem, OrderID: OrderID })
       const addInventoryTransaction = await Inventory.create({ SalesOrderID: OrderID, ProductID: soItem.ProductID, Quantity: soItem.Quantity, TransactionDate: OrderDate, TransactionType })
       const updateProductStorage = await ProductStorage.update({ Quantity: newStock }, { where: { ProductID: soItem.ProductID, LocationID } })
       const updateProductQuantity = await Product.update({ QuantityInStock: newProductStock }, { where: { ProductID: soItem.ProductID } })
@@ -153,7 +153,7 @@ const updateSalesorderById = async (orderId, params) => {
   const transaction = await db.sequelize.transaction();
   try {
     const oldOrderItems = await SalesorderDetail.findAll({
-      where: { OrderId: orderId },
+      where: { OrderID: orderId },
       transaction
     });
 
@@ -172,7 +172,7 @@ const updateSalesorderById = async (orderId, params) => {
     }
 
     await SalesorderDetail.destroy({
-      where: { OrderId: orderId },
+      where: { OrderID: orderId },
       transaction
     });
 
@@ -189,7 +189,7 @@ const updateSalesorderById = async (orderId, params) => {
     for (const soItem of OrderItems) {
       const orderItem = await SalesorderDetail.create({
         ...soItem,
-        OrderId: orderId
+        OrderID: orderId
       }, { transaction });
 
       const inventoryTransaction = await Inventory.create({
@@ -242,11 +242,69 @@ const updateSalesorderById = async (orderId, params) => {
 
 
 
-const deletesalesorderById = async (OrderId) => {
-  const salesorder = await getsalesorderBYId(OrderId);
-  if (!salesorder) return null;
-  await salesorder.destroy();
-  return salesorder;
+// const deletesalesorderById = async (OrderId) => {
+
+
+//   return await Salesorder.update({isActive: 0}, { where: { OrderID: OrderId } })
+  
+// };
+
+const deletesalesorderById = async (orderId) => {
+  let response = {
+    Status: "",
+    RestoredQuantities: []
+  };
+
+  const transaction = await db.sequelize.transaction();
+  try {
+    const existingOrder = await Salesorder.findByPk(orderId, { transaction });
+    if (!existingOrder) {
+      response.Status = "Sales Order not found";
+      return response;
+    }
+
+    const orderItems = await SalesorderDetail.findAll({
+      where: { OrderID: orderId },
+      transaction
+    });
+
+    for (const item of orderItems) {
+      await ProductStorage.increment('Quantity', {
+        by: item.Quantity,
+        where: { 
+          ProductID: item.ProductID, 
+          LocationID: existingOrder.LocationID 
+        },
+        transaction
+      });
+
+      await Product.increment('QuantityInStock', {
+        by: item.Quantity,
+        where: { ProductID: item.ProductID },
+        transaction
+      });
+
+      response.RestoredQuantities.push({
+        ProductID: item.ProductID,
+        Quantity: item.Quantity,
+        LocationID: existingOrder.LocationID
+      });
+    }
+
+    // Mark order as inactive
+    await Salesorder.update(
+      { isActive: 0 },
+      { where: { OrderID: orderId }, transaction }
+    );
+
+    await transaction.commit();
+    response.Status = "success";
+    return response;
+  } catch (error) {
+    await transaction.rollback();
+    response.Status = `Delete failed: ${error.message}`;
+    return response;
+  }
 };
 
 const getSalesReport = async ({ startDate, endDate }) => {

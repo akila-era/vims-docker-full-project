@@ -2949,15 +2949,6 @@ select {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(20, 184, 166, 0));
 }
 
-.from-gray-50 {
-  --tw-gradient-from: #fafafa;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(250, 250, 250, 0));
-}
-
-.via-white {
-  --tw-gradient-stops: var(--tw-gradient-from), #fff, var(--tw-gradient-to, rgba(255, 255, 255, 0));
-}
-
 .to-pink-600 {
   --tw-gradient-to: #db2777;
 }
@@ -2984,10 +2975,6 @@ select {
 
 .to-emerald-600 {
   --tw-gradient-to: #059669;
-}
-
-.to-gray-50 {
-  --tw-gradient-to: #fafafa;
 }
 
 .bg-cover {
@@ -3152,6 +3139,11 @@ select {
 .py-10 {
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
+}
+
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
 }
 
 .py-16 {
@@ -3335,6 +3327,10 @@ select {
 
 .align-middle {
   vertical-align: middle;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .text-55 {

@@ -312,6 +312,8 @@ function SalesOrderInfoModal({ setOpenSalesOrderDetailModal, orderInfo, pdfPrint
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  console.log(products);
+
   useEffect(() => {
     const loadSalesOrderData = async () => {
       setIsLoading(true);
@@ -467,9 +469,9 @@ function SalesOrderInfoModal({ setOpenSalesOrderDetailModal, orderInfo, pdfPrint
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3, delay: index * 0.05 }}
                             >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{detail.ProductId}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{detail.ProductID}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {products.find((p) => p.ProductID === detail.ProductId)?.Name || 'Loading...'}
+                                {products.find((p) => p.ProductID === detail.ProductID)?.Name || 'Loading...'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{detail.Quantity}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">

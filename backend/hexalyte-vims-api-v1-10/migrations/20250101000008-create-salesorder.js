@@ -45,6 +45,9 @@ module.exports = {
       PaymentStatus: {
         type: Sequelize.ENUM('UNPAID', 'PAID')
       },
+       isActive: {
+        type: Sequelize.BOOLEAN
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

@@ -11,9 +11,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      product.hasMany(models.inventorytransaction, {foreignKey: 'ProductID'})
-      product.belongsTo(models.category, {foreignKey: 'CategoryID', onDelete: 'SET NULL'})
-      product.belongsTo(models.supplier, {foreignKey: 'SupplierID', onDelete: 'SET NULL'})
+      product.hasMany(models.inventorytransaction, { foreignKey: 'ProductID' })
+      product.belongsTo(models.category, { foreignKey: 'CategoryID', onDelete: 'SET NULL' })
+      product.belongsTo(models.supplier, { foreignKey: 'SupplierID', onDelete: 'SET NULL' })
       product.belongsToMany(models.warehouselocation, {
         through: models.productstorage,
         foreignKey: 'ProductID'
@@ -24,12 +24,15 @@ module.exports = (sequelize, DataTypes) => {
       // })
       product.belongsToMany(models.salesorder, {
         through: models.salesorderdetail,
-        foreignKey: 'ProductId'
+        foreignKey: 'ProductID'
       })
       product.hasMany(models.warehousetransfers, {
         foreignKey: 'ProductID',
         // as: 'transfers'
       });
+
+      product.hasMany(models.returnorderitems, { foreignKey: 'ProductID' })
+
     }
   }
   product.init({
