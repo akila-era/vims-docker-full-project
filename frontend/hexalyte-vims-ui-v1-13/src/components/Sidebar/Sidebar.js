@@ -549,7 +549,7 @@ export default function Sidebar() {
               className="text-center text-white mr-0 inline-block whitespace-nowrap text-xl font-bold px-0"
             >
               <i className="fas fa-cubes mr-2"></i>
-              Hexa - VIMS
+              ARI
             </label>
           </div>
 
