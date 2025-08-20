@@ -569,6 +569,8 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
     setSelectedStorage(() => productStorage.filter((ps) => ps.LocationID.toString() === salesOrder.LocationID));
   }, [salesOrder.LocationID]);
 
+  console.log(selectedStorage)
+
   useEffect(() => {
     if (salesItem.ProductID === "0") {
       setSalesItem((si) => ({ ...si, SellingPrice: 0 }));
@@ -672,7 +674,7 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                     </div>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Order Type</label>
                     <div className="relative">
                       <select
@@ -688,9 +690,9 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                         {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
                         </svg> */}
-                      </div>
+                      {/* </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>

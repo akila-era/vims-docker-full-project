@@ -486,7 +486,7 @@ const createReturnSalesOrder = async (orderId, params) => {
                 const inventoryTx = await InventoryTransaction.create({
                     ReferenceID: returnOrder.ReturnID,
                     ProductID: exchangeItem.ProductID,
-                    Quantity: -quantity,
+                    Quantity: quantity,
                     TransactionType: 'EXCHANGE',
                     TransactionDate: new Date(),
                     LocationID: location,
@@ -526,9 +526,9 @@ const createReturnSalesOrder = async (orderId, params) => {
 
             if (ExchangeItems.length > 0) {
                 if (response.data.payableAmount > 0) {
-                    response.message += ` with $${response.data.payableAmount.toFixed(2)} payable by customer`;
+                    response.message += ` with LKR${response.data.payableAmount.toFixed(2)} payable by customer`;
                 } else {
-                    response.message += ` with $${creditBalance.toFixed(2)} remaining credit`;
+                    response.message += ` with LKR${creditBalance.toFixed(2)} remaining credit`;
                 }
             }
 
@@ -787,7 +787,7 @@ const createReturnSalesOrder2 = async (orderId, params) => {
             response.status = 'success';
             response.message = 'Return processed successfully';
             if (ExchangeItems.length > 0) {
-                response.message += ` with $${creditBalance.toFixed(2)} remaining credit`;
+                response.message += ` with LKR${creditBalance.toFixed(2)} remaining credit`;
             }
 
             return response;
