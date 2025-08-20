@@ -262,8 +262,7 @@ const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders}) => {
                 setCustomers(customerRes.data.allCustomers || []);
 
                 const salesOrderRes = await api.get("salesorder");
-                setselesOrders(salesOrderRes.data.salesorders || []);
-
+                setselesOrders(salesOrderRes.data.salesorders.filter(order => order.isActive !== false) || []);
                 const storageRes = await api.get("productstorage");
                 setProductStorage(storageRes.data || []);
 
