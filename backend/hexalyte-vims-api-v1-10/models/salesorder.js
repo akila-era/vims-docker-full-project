@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     OrderDate: DataTypes.DATE,
-    TotalAmount: DataTypes.DECIMAL,
+    TotalAmount: DataTypes.DECIMAL(10, 2),
     Status: DataTypes.STRING,
     Discount: DataTypes.DECIMAL,
     PaymentStatus: DataTypes.ENUM('UNPAID', 'PAID'),

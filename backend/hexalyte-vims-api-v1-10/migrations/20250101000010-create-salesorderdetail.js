@@ -25,10 +25,10 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       Quantity: {
-        type: Sequelize.INTEGER
+        type: Sequelize.DECIMAL(10, 2),
       },
       UnitPrice: {
-        type: Sequelize.DECIMAL
+        type: Sequelize.DECIMAL(10, 2),
       },
       createdAt: {
         allowNull: false,
