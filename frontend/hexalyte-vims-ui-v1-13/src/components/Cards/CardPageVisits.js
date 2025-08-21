@@ -26,7 +26,7 @@ export default function CardPageVisits() {
       const res = await api.get('purchaseorders')
       console.log(res);
       if (res.status === 200) {
-        setPurchaseOrders(() => res.data.purchaseOrders)
+        setPurchaseOrders(() => res.data.purchaseOrders.slice(0, 5))
       }
     } catch (error) {
       // "No Purchase Orders found"
