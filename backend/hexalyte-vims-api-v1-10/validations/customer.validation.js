@@ -5,7 +5,7 @@ const addCustomer = {
     Name: Joi.string().required(),
     CompanyName: Joi.string().required(),
     Phone: Joi.number().required(),
-    Email: Joi.string().required().email(),
+    Email: Joi.string().email(),
     CustomerAddressID: Joi.number(),
     Note: Joi.string()
   }),
@@ -25,7 +25,7 @@ const updateCustomerById = {
     Name: Joi.string().required(),
     CompanyName: Joi.string().required(),
     Phone: Joi.number().required(),
-    Email: Joi.string().required().email(),
+    Email: Joi.string().email(),
     CustomerAddressID: Joi.number(),
     Note: Joi.string()
   }),

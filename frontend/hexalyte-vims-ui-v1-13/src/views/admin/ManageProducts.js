@@ -485,7 +485,7 @@ function ManageProducts() {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -526,6 +526,59 @@ function ManageProducts() {
             </div>
           </div>
 
+
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+
+            {/* Product Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Total Products</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{products.length}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">In Stock</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {products.filter(product => product.QuantityInStock > 0).length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
+                    <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Low Stock Alert</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {products.filter(product => product.QuantityInStock > 0 && product.QuantityInStock <= 10).length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Data Table */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <DataTable
@@ -556,54 +609,7 @@ function ManageProducts() {
             />
           </div>
 
-          {/* Product Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                  <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Total Products</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">{products.length}</h3>
-                </div>
-              </div>
-            </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">In Stock</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {products.filter(product => product.QuantityInStock > 0).length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
-                  <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Low Stock Alert</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {products.filter(product => product.QuantityInStock > 0 && product.QuantityInStock <= 10).length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -22,7 +22,7 @@ module.exports = {
         }
       },
       Quantity: {
-        type: Sequelize.INTEGER
+        type: Sequelize.DECIMAL(10, 2)
       },
       LastUpdated: {
         type: Sequelize.DATE

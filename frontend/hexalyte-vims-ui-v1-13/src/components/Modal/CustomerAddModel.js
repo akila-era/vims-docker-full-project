@@ -59,11 +59,11 @@ function CustomerAddModal({ setOpenModal, addCustomer }) {
             validationErrors.Phone = "Phone number must contain only numbers";
         }
 
-        if (!newCustomer.Email.trim()) {
-            validationErrors.Email = "Email is required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.Email)) {
-            validationErrors.Email = "Please enter a valid email address";
-        }
+        // if (!newCustomer.Email.trim()) {
+        //     validationErrors.Email = "Email is required";
+        // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.Email)) {
+        //     validationErrors.Email = "Please enter a valid email address";
+        // }
 
         setErrors(validationErrors);
         return Object.keys(validationErrors).length === 0;
@@ -81,13 +81,13 @@ function CustomerAddModal({ setOpenModal, addCustomer }) {
         }
 
 
-        if (!newCustomerAddress.PostalCode.trim()) {
-            validationErrors.PostalCode = "Postal Code is required";
-        }
+        // if (!newCustomerAddress.PostalCode.trim()) {
+        //     validationErrors.PostalCode = "Postal Code is required";
+        // }
 
-        if (!newCustomerAddress.Country.trim()) {
-            validationErrors.Country = "Country is required";
-        }
+        // if (!newCustomerAddress.Country.trim()) {
+        //     validationErrors.Country = "Country is required";
+        // }
 
         setAddressErrors(validationErrors);
         return Object.keys(validationErrors).length === 0;

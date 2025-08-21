@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
         key: 'LocationID'
       }
     },
-    Quantity: DataTypes.INTEGER,
+    Quantity: DataTypes.DECIMAL(10, 2),
     LastUpdated: DataTypes.DATE
   }, {
     sequelize,

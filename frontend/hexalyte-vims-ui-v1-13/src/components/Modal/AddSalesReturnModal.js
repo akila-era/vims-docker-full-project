@@ -253,7 +253,7 @@ const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders}) => {
                 //   isLoadingItems(true);
 
                 const productRes = await api.get("product");
-                setProducts(productRes.data.allProducts || []);
+                setProducts(productRes.data.allProducts.filter(product => product.isActive !== false) || []);
 
                 const warehouseRes = await api.get("location");
                 setWarehouses(warehouseRes.data.locations || []);

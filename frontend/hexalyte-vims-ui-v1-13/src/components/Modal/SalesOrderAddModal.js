@@ -513,7 +513,7 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
       const api = createAxiosInstance();
       const customersRes = await api.get(`customer`)
       if (customersRes.status === 200) {
-        setCustomers(() => customersRes.data.allCustomers)
+        setCustomers(() => customersRes.data.allCustomers.filter(item => item.isActive !== false))
       }
     } catch (error) {
       if (error.status === 404 && error.response.data.message === "No Customers Found") {

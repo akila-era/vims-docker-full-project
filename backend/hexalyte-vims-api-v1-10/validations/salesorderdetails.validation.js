@@ -5,7 +5,7 @@ const createSalesOrderDetail = {
   body: Joi.object().keys({
     OrderId: Joi.number().integer().required(),  
     ProductId: Joi.number().integer().required(), 
-    Quantity: Joi.number().integer().min(1).required(),
+    Quantity: Joi.number().required(),
     UnitPrice: Joi.number().precision(2).required(),
   }),
 };
@@ -30,7 +30,7 @@ const updateSalesOrderDetail = {
     ProductId: Joi.number().integer().required(),
   }),
   body: Joi.object().keys({
-    Quantity: Joi.number().integer().min(1),  
+    Quantity: Joi.number(),  
     UnitPrice: Joi.number().precision(2),    
   }).min(1),  
 };

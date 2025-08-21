@@ -594,200 +594,6 @@ function ManagePurchaseOrders() {
     printWindow.document.close();
   };
 
-  //   const printAllOrders = () => {
-  //     const printWindow = window.open('', '_blank');
-  //     const currentDate = new Date().toLocaleDateString('en-US', {
-  //       year: 'numeric',
-  //       month: 'long',
-  //       day: 'numeric'
-  //     });
-
-  //     const totalOrders = filteredOrders.length;
-  //     const paidOrders = filteredOrders.filter(order => order.PaymentStatus?.toLowerCase() === "paid").length;
-  //     const unpaidOrders = filteredOrders.filter(order => order.PaymentStatus?.toLowerCase() === "unpaid").length;
-  //     const totalAmount = filteredOrders.reduce((sum, order) => sum + (Number(order.TotalAmount) || 0), 0).toLocaleString();
-
-  //     const ordersTableRows = filteredOrders.map(order => {
-  //       const orderDate = new Date(order.OrderDate).toLocaleDateString('en-US', {
-  //         year: 'numeric',
-  //         month: 'short',
-  //         day: 'numeric'
-  //       });
-
-  //       return `
-  //         <tr>
-  //           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">#${order.OrderID}</td>
-  //           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${orderDate}</td>
-  //           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">${Number(order.TotalAmount)?.toLocaleString() || '0'} LKR</td>
-  //           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">
-  //             <span class="status-badge payment-${order.Status?.toLowerCase() || 'unpaid'}">${order.Status || 'Unpaid'}</span>
-  //           </td>
-  //         </tr>
-  //       `;
-  //     }).join('');
-
-  //     const printContent = `
-  //       <!DOCTYPE html>
-  //       <html>
-  //       <head>
-  //         <title>Purchase Orders Report</title>
-  //         <style>
-  //           body {
-  //             font-family: Arial, sans-serif;
-  //             margin: 40px;
-  //             color: #333;
-  //             line-height: 1.6;
-  //           }
-  //           .header {
-  //             text-align: center;
-  //             border-bottom: 3px solid #2563eb;
-  //             padding-bottom: 20px;
-  //             margin-bottom: 30px;
-  //           }
-  //           .company-name {
-  //             font-size: 28px;
-  //             font-weight: bold;
-  //             color: #1e40af;
-  //             margin-bottom: 5px;
-  //           }
-  //           .document-title {
-  //             font-size: 24px;
-  //             color: #374151;
-  //             margin: 10px 0;
-  //           }
-  //           .summary-grid {
-  //   display: grid;
-  //   grid-template-columns: repeat(4, 1fr);
-  //   gap: 15px;
-  //   margin-bottom: 30px;
-  //   max-width: 210mm; /* A4 width */
-  //   margin: 0 auto 30px auto; /* Center the grid */
-  // }
-  //           .summary-card {
-  //             border: 1px solid #e5e7eb;
-  //             border-radius: 8px;
-  //             padding: 15px;
-  //             text-align: center;
-  //           }
-  //           .summary-title {
-  //             font-size: 14px;
-  //             color: #6b7280;
-  //             margin-bottom: 5px;
-  //           }
-  //           .summary-value {
-  //             font-size: 24px;
-  //             font-weight: bold;
-  //             color: #1f2937;
-  //           }
-  //           .orders-table {
-  //             width: 100%;
-  //             border-collapse: collapse;
-  //             margin-top: 20px;
-  //           }
-  //           .orders-table th {
-  //             background: #f9fafb;
-  //             padding: 12px 8px;
-  //             text-align: left;
-  //             font-weight: 600;
-  //             color: #374151;
-  //             border-bottom: 2px solid #e5e7eb;
-  //           }
-  //           .status-badge {
-  //             padding: 4px 12px;
-  //             border-radius: 20px;
-  //             font-size: 12px;
-  //             font-weight: 600;
-  //             text-transform: uppercase;
-  //           }
-  //           .status-completed { background: #d1fae5; color: #065f46; }
-  //           .status-pending { background: #fef3c7; color: #92400e; }
-  //           .status-cancelled { background: #fee2e2; color: #991b1b; }
-  //           .payment-paid { background: #d1fae5; color: #065f46; }
-  //           .payment-unpaid { background: #fee2e2; color: #991b1b; }
-  //           .footer {
-  //             margin-top: 50px;
-  //             border-top: 1px solid #e5e7eb;
-  //             padding-top: 20px;
-  //             text-align: center;
-  //             color: #6b7280;
-  //             font-size: 12px;
-  //           }
-  //           .print-date {
-  //             text-align: right;
-  //             font-size: 12px;
-  //             color: #6b7280;
-  //             margin-bottom: 20px;
-  //           }
-  //           @media print {
-  //             body { margin: 20px; }
-  //             .summary-grid { grid-template-columns: repeat(4, 1fr); }
-  //           }
-  //         </style>
-  //       </head>
-  //       <body>
-  //         <div class="print-date">Printed on: ${currentDate}</div>
-
-  //         <div class="header">
-  //           <div class="company-name">Ashoka Rubber Industries</div>
-  //           <p style="font-size: 0.75rem"> <strong> DEALERS IN RADIATOR HOSE, AIR CLEANER HOSE, OIL HOSE AND POWER STEARRING HOSE </strong> </p>
-  //           <p style="font-size: 0.75rem"> No. 89, Ruwanpura, Hapugasthalawa, Tel: 0776 272 994, 0779 626 642 </p>
-  //           <div class="document-title">Purchase Orders Report</div>
-  //         </div>
-
-  //         <div class="summary-grid">
-  //           <div class="summary-card">
-  //             <div class="summary-title">Total Orders</div>
-  //             <div class="summary-value">${totalOrders}</div>
-  //           </div>
-  //           <div class="summary-card">
-  //             <div class="summary-title">Paid Orders</div>
-  //             <div class="summary-value">${paidOrders}</div>
-  //           </div>
-  //           <div class="summary-card">
-  //             <div class="summary-title">Unpaid Orders</div>
-  //             <div class="summary-value">${unpaidOrders}</div>
-  //           </div>
-  //           <div class="summary-card">
-  //             <div class="summary-title">Total Amount</div>
-  //             <div class="summary-value">${totalAmount.toLocaleString()} LKR</div>
-  //           </div>
-  //         </div>
-
-  //         <table class="orders-table">
-  //           <thead>
-  //             <tr>
-  //               <th>Order ID</th>
-  //               <th>Order Date</th>
-  //               <th>Total Amount</th>
-  //               <th>Payment Status</th>
-  //             </tr>
-  //           </thead>
-  //           <tbody>
-  //             ${ordersTableRows}
-  //           </tbody>
-  //         </table>
-
-  //         <div class="footer">
-  //           <p>This is a computer-generated report. Total of ${totalOrders} orders listed.</p>
-  //           <p>Purchase Orders Report | Generated on ${currentDate}</p>
-  //         </div>
-
-  //         <script>
-  //           window.onload = function() {
-  //             window.print();
-  //             window.onafterprint = function() {
-  //               window.close();
-  //             };
-  //           };
-  //         </script>
-  //       </body>
-  //       </html>
-  //     `;
-
-  //     printWindow.document.write(printContent);
-  //     printWindow.document.close();
-  //   };
-
   const printAllOrders = () => {
     const printWindow = window.open('', '_blank');
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -1285,7 +1091,7 @@ function ManagePurchaseOrders() {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm ">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1408,6 +1214,90 @@ function ManagePurchaseOrders() {
             )}
           </div>
 
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+
+            {/* Order Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Total Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{purchaseOrders.length}</h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5">
+                  <p className="text-sm font-medium text-gray-500">Completed Orders</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "completed").length}
+                  </h3>
+                </div>
+              </div>
+            </div> */}
+
+              {/* <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
+                  <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5">
+                  <p className="text-sm font-medium text-gray-500">Pending Orders</p>
+                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "pending").length}
+                  </h3>
+                </div>
+              </div>
+            </div> */}
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Paid Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {purchaseOrders.filter(order => order.Status?.toLowerCase() === "paid").length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
+                    <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Unpaid Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {purchaseOrders.filter(order => order.Status?.toLowerCase() === "unpaid").length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Data Table */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <DataTable
@@ -1436,86 +1326,7 @@ function ManagePurchaseOrders() {
             />
           </div>
 
-          {/* Order Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                  <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Total Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">{purchaseOrders.length}</h3>
-                </div>
-              </div>
-            </div>
 
-            {/* <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Completed Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "completed").length}
-                  </h3>
-                </div>
-              </div>
-            </div> */}
-
-            {/* <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
-                  <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Pending Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "pending").length}
-                  </h3>
-                </div>
-              </div>
-            </div> */}
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Paid Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "paid").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
-                  <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Unpaid Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {purchaseOrders.filter(order => order.Status?.toLowerCase() === "unpaid").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

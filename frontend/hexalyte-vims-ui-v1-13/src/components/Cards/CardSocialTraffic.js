@@ -25,7 +25,7 @@ export default function CardSocialTraffic() {
 
       const api = createAxiosInstance()
       const res = await api.get('salesorderdetails')
-
+      console.log(res)
       if (res.status === 200) {
         setSalesOrderDetails(() => res.data.data.data);
       }
@@ -42,7 +42,7 @@ export default function CardSocialTraffic() {
 
       const api = createAxiosInstance()
       const res = await api.get('product')
-
+      console.log(res)
       if (res.status === 200) {
         setProducts(() => res.data.allProducts)
       }
@@ -55,17 +55,17 @@ export default function CardSocialTraffic() {
     }
   }
 
-  // useEffect(() => {
+  useEffect(() => {
 
-  //   if (checkToken()) {
-  //     fetchSalesOrderDetails()
-  //     fetchProducts()
-  //   } else {
-  //     history.push('/auth/login')
-  //     return
-  //   }
+    // if (checkToken()) {
+    fetchSalesOrderDetails()
+    fetchProducts()
+    // } else {
+    //   history.push('/auth/login')
+    //   return
+    // }
 
-  // }, [])
+  }, [])
 
   useEffect(() => {
 
@@ -73,7 +73,7 @@ export default function CardSocialTraffic() {
 
     salesOrderDetails.forEach(order => {
 
-      const productId = order.ProductId;
+      const productId = order.ProductID;
 
       productCount[productId] = (productCount[productId] || 0) + 1;
 

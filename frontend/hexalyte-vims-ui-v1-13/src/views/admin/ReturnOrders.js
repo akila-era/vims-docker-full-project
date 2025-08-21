@@ -152,118 +152,118 @@ const ReturnOrders = () => {
   // }
 
   const customStyles = {
-  headRow: { style: { backgroundColor: "#f9fafb", borderRadius: "8px 8px 0 0", border: "none", minHeight: "56px" } },
-  headCells: { style: { color: "#4b5563", fontSize: "14px", fontWeight: 600, paddingLeft: 16, paddingRight: 16 } },
-  rows: {
-    style: {
-      fontSize: "14px",
-      minHeight: "60px",
-      borderBottom: "1px solid #f3f4f6",
-      "&:last-of-type": { borderBottom: "none" },
+    headRow: { style: { backgroundColor: "#f9fafb", borderRadius: "8px 8px 0 0", border: "none", minHeight: "56px" } },
+    headCells: { style: { color: "#4b5563", fontSize: "14px", fontWeight: 600, paddingLeft: 16, paddingRight: 16 } },
+    rows: {
+      style: {
+        fontSize: "14px",
+        minHeight: "60px",
+        borderBottom: "1px solid #f3f4f6",
+        "&:last-of-type": { borderBottom: "none" },
+      },
+      highlightOnHoverStyle: {
+        backgroundColor: "#f3f4f6",
+        cursor: "pointer",
+        transitionDuration: "0.15s",
+        transitionProperty: "background-color",
+        borderBottomColor: "#f3f4f6",
+        outlineColor: "transparent",
+      },
     },
-    highlightOnHoverStyle: {
-      backgroundColor: "#f3f4f6",
-      cursor: "pointer",
-      transitionDuration: "0.15s",
-      transitionProperty: "background-color",
-      borderBottomColor: "#f3f4f6",
-      outlineColor: "transparent",
+    pagination: {
+      style: {
+        border: "none",
+        backgroundColor: "#fff",
+        borderRadius: "0 0 8px 8px",
+        boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+      },
     },
-  },
-  pagination: {
-    style: {
-      border: "none",
-      backgroundColor: "#fff",
-      borderRadius: "0 0 8px 8px",
-      boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
-    },
-  },
-};
+  };
 
-const returnColumns = [
-  {
-    id: "rid",
-    name: "Return ID",
-    selector: row => row.ReturnID,
-    sortable: true,
-    width: "120px",
-    cell: row => <span className="font-medium text-gray-900">{row.ReturnID ?? "N/A"}</span>,
-  },
-  {
-    id: "soid",
-    name: "Sales / Purchase",
-    sortable: true,
-    sortFunction: (a, b) => String(a.SalesOrderID ?? "").localeCompare(String(b.SalesOrderID ?? "")),
-    cell: row => (
-      <div>
-        <div className="text-sm font-mono text-gray-900">{row.SalesOrderID ?? "N/A"}</div>
-        {row.PurchaseOrderID && <div className="text-xs text-gray-500">{row.PurchaseOrderID}</div>}
-      </div>
-    ),
-    grow: 1.2,
-  },
-  {
-    id: "dates",
-    name: "Dates",
-    sortable: true,
-    sortFunction: (a, b) =>
-      new Date(a.ReturnDate || a.createdAt || 0) - new Date(b.ReturnDate || b.createdAt || 0),
-    cell: row => (
-      <div className="text-sm">
-        <div className="text-gray-900">{row.ReturnDate ? new Date(row.ReturnDate).toLocaleDateString() : "N/A"}</div>
-        <div className="text-xs text-gray-500">
-          Created: {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A"}
+  const returnColumns = [
+    {
+      id: "rid",
+      name: "Return ID",
+      selector: row => row.ReturnID,
+      sortable: true,
+      width: "120px",
+      cell: row => <span className="font-medium text-gray-900">{row.ReturnID ?? "N/A"}</span>,
+    },
+    {
+      id: "soid",
+      name: "Sales / Purchase",
+      sortable: true,
+      sortFunction: (a, b) => String(a.SalesOrderID ?? "").localeCompare(String(b.SalesOrderID ?? "")),
+      cell: row => (
+        <div>
+          <div className="text-sm font-mono text-gray-900">{row.SalesOrderID ?? "N/A"}</div>
+          {row.PurchaseOrderID && <div className="text-xs text-gray-500">{row.PurchaseOrderID}</div>}
         </div>
-      </div>
-    ),
-    width: "180px",
-  },
-  {
-    id: "reason",
-    name: "Reason",
-    selector: row => row.Reason || "",
-    sortable: true,
-    grow: 2,
-    cell: row => <div className="text-sm text-gray-900">{row.Reason || "No reason provided"}</div>,
-  },
-  {
-    id: "items",
-    name: "Items Count",
-    selector: row => row.returnorderitems?.length ?? 0,
-    sortable: true,
-    width: "140px",
-    cell: row => <div className="text-sm font-medium text-gray-900">{row.returnorderitems?.length || 0}</div>,
-    right: false,
-  },
-  {
-    id: "qty",
-    name: "Total Quantity",
-    selector: row => (row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) ?? 0),
-    sortable: true,
-    width: "160px",
-    cell: row => (
-      <div className="text-sm font-medium text-gray-900">
-        {row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) || 0}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    name: "Actions",
-    button: true,
-    width: "120px",
-    cell: row => (
-      <button
-        onClick={(e) => { e.stopPropagation(); setSelectedReturn(row); }}
-        className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
-        title="View"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-        View
-      </button>
-    ),
-  },
-];
+      ),
+      grow: 1.2,
+    },
+    {
+      id: "dates",
+      name: "Dates",
+      sortable: true,
+      sortFunction: (a, b) =>
+        new Date(a.ReturnDate || a.createdAt || 0) - new Date(b.ReturnDate || b.createdAt || 0),
+      cell: row => (
+        <div className="text-sm">
+          <div className="text-gray-900">{row.ReturnDate ? new Date(row.ReturnDate).toLocaleDateString() : "N/A"}</div>
+          <div className="text-xs text-gray-500">
+            Created: {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A"}
+          </div>
+        </div>
+      ),
+      width: "180px",
+    },
+    {
+      id: "reason",
+      name: "Reason",
+      selector: row => row.Reason || "",
+      sortable: true,
+      grow: 2,
+      cell: row => <div className="text-sm text-gray-900">{row.Reason || "No reason provided"}</div>,
+    },
+    {
+      id: "items",
+      name: "Items Count",
+      selector: row => row.returnorderitems?.length ?? 0,
+      sortable: true,
+      width: "140px",
+      cell: row => <div className="text-sm font-medium text-gray-900">{row.returnorderitems?.length || 0}</div>,
+      right: false,
+    },
+    {
+      id: "qty",
+      name: "Total Quantity",
+      selector: row => (row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) ?? 0),
+      sortable: true,
+      width: "160px",
+      cell: row => (
+        <div className="text-sm font-medium text-gray-900">
+          {row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) || 0}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      name: "Actions",
+      button: true,
+      width: "120px",
+      cell: row => (
+        <button
+          onClick={(e) => { e.stopPropagation(); setSelectedReturn(row); }}
+          className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
+          title="View"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          View
+        </button>
+      ),
+    },
+  ];
 
 
 
@@ -474,34 +474,34 @@ const returnColumns = [
 
       <div className="overflow-x-auto">
         <DataTable
-    columns={returnColumns}
-    data={filteredReturns}
-    customStyles={customStyles}
-    highlightOnHover
-    pointerOnHover
-    pagination
-    paginationPerPage={10}
-    paginationRowsPerPageOptions={[5, 10, 15, 20, 25, 30]}
-    progressPending={loading}
-    onRowClicked={(row) => setSelectedReturn(row)}
-    progressComponent={
-      <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    }
-    noDataComponent={
-      <div className="flex flex-col items-center justify-center p-10 text-center">
-        <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-        <p className="mt-4 text-lg font-medium text-gray-500">No returns found</p>
-        <p className="mt-1 text-sm text-gray-400">
-          {searchTerm ? "Try adjusting your search" : "No return requests have been submitted yet"}
-        </p>
-      </div>
-    }
-    defaultSortFieldId="rid"
-  />
+          columns={returnColumns}
+          data={filteredReturns}
+          customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          pagination
+          paginationPerPage={10}
+          paginationRowsPerPageOptions={[5, 10, 15, 20, 25, 30]}
+          progressPending={loading}
+          onRowClicked={(row) => setSelectedReturn(row)}
+          progressComponent={
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          }
+          noDataComponent={
+            <div className="flex flex-col items-center justify-center p-10 text-center">
+              <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="mt-4 text-lg font-medium text-gray-500">No returns found</p>
+              <p className="mt-1 text-sm text-gray-400">
+                {searchTerm ? "Try adjusting your search" : "No return requests have been submitted yet"}
+              </p>
+            </div>
+          }
+          defaultSortFieldId="rid"
+        />
       </div>
 
       {showAddModal && (

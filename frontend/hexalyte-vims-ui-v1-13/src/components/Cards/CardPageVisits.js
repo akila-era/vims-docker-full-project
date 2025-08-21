@@ -24,7 +24,7 @@ export default function CardPageVisits() {
 
       const api = createAxiosInstance()
       const res = await api.get('purchaseorders')
-
+      console.log(res);
       if (res.status === 200) {
         setPurchaseOrders(() => res.data.purchaseOrders)
       }
@@ -42,7 +42,7 @@ export default function CardPageVisits() {
   useEffect(() => {
 
     // if (checkToken()) {
-    //   fetchPurchasOrders()
+      fetchPurchasOrders()
     // } else {
     //   history.push('/auth/login')
     //   return

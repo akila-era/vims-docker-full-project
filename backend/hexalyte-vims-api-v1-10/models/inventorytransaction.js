@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    Quantity: DataTypes.INTEGER,
+    Quantity: DataTypes.DECIMAL(10, 2),
     TransactionDate: DataTypes.DATE,
     TransactionType: DataTypes.ENUM('FULFILL', 'RETURN' , 'EXCHANGE')
   }, {
