@@ -307,7 +307,7 @@ function ManageInventory(props) {
             name: "Product Name",
             selector: row => row.product.Name,
             sortable: true,
-            width: "120px",
+            width: "170px",
             style: {
                 fontWeight: 600,
                 color: "#1f2937",

@@ -1,439 +1,196 @@
-import React, { useEffect, useState, useRef } from "react";
-import Swal from "sweetalert2";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom/cjs/react-router-dom";
-import handlePrint from "components/Print/handlePrint";
-import DiscountDropdown from "components/Dropdowns/DiscountDropdown";
+
+import React, { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { createAxiosInstance } from "api/axiosInstance";
 
-// const BASE_URL = process.env.REACT_APP_BASE_URL;
-
-// Product Search Dropdown Component
-const ProductSearchDropdown = ({
-    selectedStorage,
-    salesItem,
-    setSalesItem,
-    disabled
-}) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
-    const [filteredProducts, setFilteredProducts] = useState([]);
-    const dropdownRef = useRef(null);
-    const inputRef = useRef(null);
+function WarehouseInfoModal({ warehouseInfo, setOpenModal }) {
     const [products, setProducts] = useState([]);
+    const [allProducts, setAllProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+    const [productStorages, setProductStorages] = useState([]);
 
-    async function fetchProducts() {
+    async function loadProductStorageData() {
         const api = createAxiosInstance();
         try {
-            const products = await api.get(`product`);
+            const res = await api.get(`productstorage`);
+            console.log(res)
+            const filteredData = res.data.filter(
+            (location) => location.LocationID === warehouseInfo.LocationID
+        );
 
-            if (products.status === 200) {
-                setProducts(() => products.data.allProducts.filter(product => product.isActive !== false));
-            }
+        setProductStorages(filteredData);
         } catch (error) {
-            if (error.status === 404 && error.response.data.message === "No Products Found") {
-                console.log("No Products Found");
-            } else {
-                console.log(error)
-            }
+            console.error("Failed to load products:", error);
         }
     }
-    // console.log(products)
 
-
-    // Filter products based on search term
     useEffect(() => {
-        if (!searchTerm) {
-            setFilteredProducts(selectedStorage);
+        loadProductStorageData();
+    }, []);
+
+    console.log(productStorages)
+
+    async function loadProductData() {
+        const api = createAxiosInstance();
+        try {
+            const productsRes = await api.get(`product`);
+            setProducts(productsRes.data.allProducts);
+        } catch (error) {
+            console.error("Failed to load products:", error);
+        }
+    }
+
+    console.log(products);
+
+    useEffect(() => {
+        loadProductData();
+    }, []);
+
+    // Calculate total quantity from all products
+    const totalQuantity = useMemo(() => {
+        return products.reduce((total, product) => total + (product.Quantity || 0), 0);
+    }, [products]);
+
+    // Filter and sort products based on search term and sort configuration
+    const filteredAndSortedProducts = useMemo(() => {
+        let filtered = products.filter(product =>
+            product.ProductID?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.Name?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        if (sortConfig.key) {
+            filtered.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+
+        return filtered;
+    }, [products, searchTerm, sortConfig]);
+
+    const handleSort = (key) => {
+        setSortConfig(prevConfig => ({
+            key,
+            direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const getSortIcon = (columnKey) => {
+        if (sortConfig.key !== columnKey) {
+            return (
+                <svg className="w-4 h-4 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+            );
+        }
+
+        return sortConfig.direction === 'asc' ? (
+            <svg className="w-4 h-4 ml-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+        ) : (
+            <svg className="w-4 h-4 ml-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+        );
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'Invalid Date';
+        }
+    };
+
+    async function loadProductData() {
+        if (!warehouseInfo?.LocationID) {
+            setError('No location ID provided');
+            setIsLoading(false);
             return;
         }
 
-        const filtered = selectedStorage.filter(storageItem => {
-            const product = products.find(p => p.ProductID === storageItem.ProductID);
-            if (!product) return false;
+        const api = createAxiosInstance();
+        try {
+            setIsLoading(true);
+            setError(null);
 
-            const searchLower = searchTerm.toLowerCase();
-            return (
-                product.Name.toLowerCase().includes(searchLower) ||
-                product.ProductID.toString().includes(searchLower) ||
-                (product.SKU && product.SKU.toLowerCase().includes(searchLower))
-            );
-        });
+            const productsRes = await api.get(`productstorage/${warehouseInfo.LocationID}`);
 
-        setFilteredProducts(filtered);
-    }, [searchTerm, selectedStorage, products]);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
+            if (productsRes.data && productsRes.data.productStorageByProductID) {
+                setProducts(productsRes.data.productStorageByProductID);
+            } else {
+                setProducts([]);
             }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleProductSelect = (productId) => {
-        setSalesItem(si => ({ ...si, ProductID: productId }));
-
-        // Set the search term to the selected product name
-        const product = products.find(p => p.ProductID.toString() === productId);
-        if (product) {
-            setSearchTerm(product.Name);
+        } catch (error) {
+            console.error("Failed to load products:", error);
+            setError(error.response?.data?.message || 'Failed to load warehouse data. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsOpen(false);
-    };
-
-    const handleInputChange = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-        setIsOpen(true);
-
-        // If input is cleared, reset the product selection
-        if (!value) {
-            setSalesItem(si => ({ ...si, ProductID: "0" }));
-        }
-    };
-
-    const handleInputFocus = () => {
-        setIsOpen(true);
-    };
-
-    const clearSelection = () => {
-        setSearchTerm('');
-        setSalesItem(si => ({ ...si, ProductID: "0" }));
-        inputRef.current?.focus();
-    };
-
-    // Get current product name for display
-    const selectedProduct = products.find(p => p.ProductID.toString() === salesItem.ProductID);
-    const displayValue = selectedProduct ? selectedProduct.Name : searchTerm;
-
-    // Reset search term when salesItem.ProductID changes to "0" from outside
-    useEffect(() => {
-        if (salesItem.ProductID === "0") {
-            setSearchTerm('');
-        }
-    }, [salesItem.ProductID]);
+    }
 
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        loadProductData();
+    }, [warehouseInfo?.LocationID]);
+
+    const handleModalClick = (e) => {
+        e.stopPropagation();
+    };
+
+    const handleOverlayClick = () => {
+        setOpenModal(false);
+    };
+
+    const handleRetry = () => {
+        loadProductData();
+    };
 
     return (
-        <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Product
-            </label>
-
-            <div className="relative">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                    placeholder={disabled ? "Select warehouse first" : "Search products..."}
-                    value={displayValue}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    disabled={disabled}
-                    autoComplete="off"
-                />
-
-                {/* Clear button */}
-                {searchTerm && !disabled && (
-                    <button
-                        type="button"
-                        className="absolute inset-y-0 right-8 flex items-center px-2 text-gray-400 hover:text-gray-600"
-                        onClick={clearSelection}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                )}
-
-                {/* Dropdown arrow */}
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                </div>
-            </div>
-
-            {/* Dropdown menu */}
-            {isOpen && !disabled && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {products.length > 0 ? (
-                        products.map((storageItem) => {
-                            const product = products.find(p => p.ProductID === storageItem.ProductID);
-                            if (!product) return null;
-
-                            return (
-                                <div
-                                    key={storageItem.ProductID}
-                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                    onClick={() => handleProductSelect(storageItem.ProductID.toString())}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="font-medium text-gray-900">{product.Name}</div>
-                                            <div className="text-sm text-gray-500">
-                                                ID: {product.ProductID} | Stock: {storageItem.Quantity} units
-                                            </div>
-                                            {product.SKU && (
-                                                <div className="text-xs text-gray-400">SKU: {product.SKU}</div>
-                                            )}
-                                        </div>
-                                        <div className="ml-4 text-right">
-                                            <div className="text-sm font-medium text-green-600">
-                                                LKR {product.SellingPrice?.toLocaleString() || '0'}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {storageItem.Quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className="px-4 py-3 text-center text-gray-500">
-                            {searchTerm ? 'No products found matching your search' : 'No products available'}
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-
-
-
-
-
-
-
-function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
-  const [warehouses, setWarehouses] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [productStorage, setProductStorage] = useState([]);
-  const [selectedStorage, setSelectedStorage] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [orderItem, setOrderItem] = useState([]);
-  const [salesItems, setSalesItems] = useState([]);
-  const [discounts, setDiscounts] = useState([]);
-
-  console.log(salesItems)
-
-  const [salesOrder, setSalesOrder] = useState({
-    OrderDate: new Date(),
-    CustomerID: salseOrderInfo.CustomerID,
-    TotalAmount: 0,
-    Status: salseOrderInfo.Status,
-    OrderType: "FULFILL",
-    LocationID: salseOrderInfo.LocationID,
-    Discount: 0,
-    DiscountID: null,
-    PaymentStatus: "UNPAID",
-  });
-
-  const [salesItem, setSalesItem] = useState({
-    ProductID: "0",
-    SellingPrice: 0,
-    Quantity: 0,
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const api = createAxiosInstance();
-      const [productRes, warehouseRes, customerRes, discountRes, storageRes] = await Promise.all([
-        api.get("product"),
-        api.get("location"),
-        api.get("customer"),
-        api.get("discounts/sales"),
-        api.get("productstorage"),
-      ]);
-
-      setProducts(productRes.data.allProducts.filter(p => p.isActive));
-      setWarehouses(warehouseRes.data.locations);
-      setCustomers(customerRes.data.allCustomers);
-      setDiscounts(discountRes.data.discounts.filter(d => d.isActive));
-      setProductStorage(storageRes.data);
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchOrderItems = async () => {
-      const api = createAxiosInstance();
-      const res = await api.get(`salesorderdetails/${salseOrderInfo.OrderID}`);
-      setOrderItem(res.data.data);
-    };
-
-    fetchOrderItems();
-  }, [salseOrderInfo.OrderID]);
-
-  useEffect(() => {
-    if (!orderItem.length || !products.length || !productStorage.length) return;
-
-    const merged = orderItem.map(item => {
-      const product = products.find(p => p.ProductID === item.ProductID);
-      const storage = productStorage.find(
-        ps => ps.ProductID === item.ProductID && ps.LocationID.toString() === salseOrderInfo.LocationID
-      );
-
-      return {
-        ProductID: item.ProductID.toString(),
-        ProductName: product?.Name || '',
-        Quantity: item.Quantity,
-        UnitPrice: item.UnitPrice,
-        TotalPrice: item.Quantity * item.UnitPrice,
-        Stock: storage?.Quantity || 0
-      };
-    });
-
-    setSalesItems(merged);
-  }, [orderItem, products, productStorage, salseOrderInfo.LocationID]);
-
-  useEffect(() => {
-    if (salesOrder.LocationID === "0") return;
-    const storage = productStorage.filter(
-      ps => ps.LocationID.toString() === salesOrder.LocationID
-    );
-    setSelectedStorage(storage);
-  }, [salesOrder.LocationID, productStorage]);
-
-  useEffect(() => {
-    const total = salesItems.reduce((sum, item) => sum + item.TotalPrice, 0) - Number(salesOrder.Discount);
-    setSalesOrder(s => ({ ...s, TotalAmount: total }));
-  }, [salesItems, salesOrder.Discount]);
-
-  useEffect(() => {
-    if (salesItem.ProductID === "0") return;
-    const selectedProduct = products.find(p => p.ProductID.toString() === salesItem.ProductID);
-    if (selectedProduct) {
-      setSalesItem(si => ({ ...si, SellingPrice: selectedProduct.SellingPrice }));
-    }
-  }, [salesItem.ProductID, products]);
-
-  const addSalesItem = (e) => {
-    e.preventDefault();
-    const selected = selectedStorage.find(p => p.ProductID.toString() === salesItem.ProductID);
-    const availableQty = selected?.Quantity || 0;
-
-    if (salesItem.ProductID === "0" || salesItem.Quantity <= 0) {
-      Swal.fire({ icon: "warning", title: "Invalid Product or Quantity" });
-      return;
-    }
-
-    if (salesItem.Quantity > availableQty && salesOrder.OrderType === "FULFILL") {
-      Swal.fire({ icon: "warning", title: "Quantity not available" });
-      return;
-    }
-
-    const existing = salesItems.find(i => i.ProductID === salesItem.ProductID);
-    const newQty = existing ? Number(existing.Quantity) + Number(salesItem.Quantity) : Number(salesItem.Quantity);
-
-    if (newQty > availableQty && salesOrder.OrderType === "FULFILL") {
-      Swal.fire({ icon: "warning", title: "Quantity exceeds available stock" });
-      return;
-    }
-
-    const newItem = {
-      ProductID: salesItem.ProductID,
-      ProductName: products.find(p => p.ProductID.toString() === salesItem.ProductID)?.Name || '',
-      Quantity: salesItem.Quantity,
-      UnitPrice: salesItem.SellingPrice,
-      TotalPrice: salesItem.Quantity * salesItem.SellingPrice,
-    };
-
-    if (existing) {
-      setSalesItems(items => items.map(item =>
-        item.ProductID === salesItem.ProductID
-          ? { ...item, Quantity: newQty, TotalPrice: newQty * item.UnitPrice }
-          : item
-      ));
-    } else {
-      setSalesItems(items => [...items, newItem]);
-    }
-
-    setSalesItem({ ProductID: "0", SellingPrice: 0, Quantity: 0 });
-  };
-
-  const addSalesOrder = async () => {
-    if (!salesItems.length) {
-      Swal.fire({ icon: "error", title: "Add at least one product" });
-      return;
-    }
-
-    try {
-      const api = createAxiosInstance();
-      const updatedOrder = {
-        ...salesOrder,
-        TransactionType: salesOrder.OrderType,
-        OrderItems: salesItems
-      };
-
-      console.log(updatedOrder)
-
-      const res = await api.put(`salesorder/update/${salseOrderInfo.OrderID}`, updatedOrder);
-      console.log(res)
-      Swal.fire({
-        title: "Success",
-        text: "Order updated. Print invoice?",
-        icon: "success",
-        showCancelButton: true,
-        confirmButtonText: "Print Invoice"
-      }).then(result => {
-        if (result.isConfirmed && res.data?.newsalesorder) {
-          handlePrint(res.data.newsalesorder.SalesOrder);
-        }
-      });
-
-      setOpenEditSalesOrderModal(false);
-    } catch (error) {
-      console.error(error);
-      Swal.fire({ icon: "error", title: "Something went wrong" });
-    }
-  };
-
-  const deleteSalesItem = ProductID => {
-    setSalesItems(items => items.filter(i => i.ProductID !== ProductID));
-  };
-
-
-
-
-    return (
-        <>
-            <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 p-4">
+        <AnimatePresence>
+            <div
+                className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 p-4 flex items-center justify-center"
+                onClick={handleOverlayClick}
+            >
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative w-11/12 lg:w-4/5 my-6 mx-auto max-w-6xl"
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="relative w-full max-w-7xl mx-auto"
+                    onClick={handleModalClick}
                 >
-                    <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
                             <h3 className="text-2xl font-bold text-white flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
-                                Update Sales Order
+                                Warehouse Details & Inventory
                             </h3>
                             <button
-                                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all duration-200"
-                                onClick={() => setOpenEditSalesOrderModal(false)}
+                                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                                onClick={() => setOpenModal(false)}
+                                aria-label="Close modal"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -441,283 +198,264 @@ function SalesOrderEditModal({ setOpenEditSalesOrderModal, salseOrderInfo }) {
                             </button>
                         </div>
 
-                        {/* Main Content */}
-                        <div className="p-6">
-                            {/* Order Info Section */}
-                            <div className="mb-8">
-                                <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Order Information
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse</label>
-                                        <div className="relative">
-                                            <select
-                                                className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white"
-                                                value={salesOrder.LocationID}
-                                                onChange={(e) => setSalesOrder((s) => ({ ...s, LocationID: e.target.value }))}
-                                            >
-                                                <option value="0">Select Warehouse</option>
-                                                {warehouses.map((warehouse) => (
-                                                    <option key={warehouse.LocationID} value={warehouse.LocationID}>
-                                                        {warehouse.WarehouseName}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                                {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                        </svg> */}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-                                        <div className="relative flex gap-3">
-                                            <select
-                                                className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white"
-                                                value={salesOrder.CustomerID}
-                                                onChange={(e) => setSalesOrder((s) => ({ ...s, CustomerID: e.target.value }))}
-                                            >
-                                                <option value="0">Select Customer</option>
-                                                {customers.map((customer) => (
-                                                    <option key={customer.CustomerID} value={customer.CustomerID}>
-                                                        {customer.CustomerID} - {customer.Name}
-                                                    </option>
-                                                ))}
-                                            </select>
-
-                                            <Link
-                                                className=" w-3/12 flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 disabled:bg-blue-300"
-                                                to="manage-customers"
-                                            >
-                                                <i className="fas fa-user-plus"></i>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
-                                        <div className="relative">
-                                            <select
-                                                className="block w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                value={salesOrder.Status}
-                                                onChange={(e) => setSalesOrder((s) => ({ ...s, Status: e.target.value }))}
-                                                disabled={salesOrder.LocationID === "0"}
-                                            >
-                                                <option value="STORE PICKUP">Store Pickup</option>
-                                                <option value="TO DELIVER">To Deliver</option>
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                            </div>
-                                        </div>
-                                    </div>
-                                   
-                                </div>
-                            </div>
-
-                            {/* Add Product Form */}
-                            <div className="mb-8">
-                                <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Add Product
-                                </h4>
-                                <form onSubmit={addSalesItem} className="bg-gray-50 p-4 rounded-lg">
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <div>
-                                            <ProductSearchDropdown
-                                                products={products}
-                                                selectedStorage={selectedStorage}
-                                                salesItem={salesItem}
-                                                setSalesItem={setSalesItem}
-                                                disabled={salesOrder.LocationID === "0"}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price (LKR)</label>
-                                            <input
-                                                type="text"
-                                                className="block w-full px-3 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-gray-100 read-only:bg-gray-100"
-                                                value={salesItem.SellingPrice}
-                                                readOnly
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                                            <input
-                                                type="number"
-                                                className="block w-full px-3 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-lg transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                placeholder="Enter Quantity"
-                                                value={salesItem.Quantity}
-                                                onChange={(e) => setSalesItem((si) => ({ ...si, Quantity: e.target.value }))}
-                                                disabled={salesOrder.LocationID === "0"}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-transparent mb-1">Add</label>
-                                            <button
-                                                type="submit"
-                                                className="w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 disabled:bg-blue-300"
-                                                disabled={salesOrder.LocationID === "0"}
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                </svg>
-                                                Add Item
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-
-                            {/* Product List */}
-                            <div className="mb-6">
-                                <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                    Order Items
-                                </h4>
-                                <div className="shadow overflow-hidden border-b border-gray-200 rounded-lg">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
-                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {salesItems.length > 0 ? (
-                                                salesItems.map((unit, index) => (
-                                                    <motion.tr
-                                                        key={index}
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ duration: 0.3 }}
-                                                    >
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{unit.ProductID}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{unit.ProductName}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.Quantity}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.UnitPrice.toLocaleString()}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{unit.TotalPrice.toLocaleString()}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                                            <button
-                                                                onClick={() => deleteSalesItem(unit.ProductID)}
-                                                                className="text-red-600 hover:text-red-900 transition duration-200"
-                                                            >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                        </td>
-                                                    </motion.tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                                                        No items added yet
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                                <div className="flex flex-wrap items-end justify-between gap-4">
-
-                                    {/* Compact Discount Section - Left Corner */}
-                                    <div className="flex items-end gap-3">
-                                        {/* Manual Discount Input */}
-                                        <div className="flex flex-col">
-                                            <label className="text-xs font-medium text-gray-600 mb-1">Manual Discount</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="number"
-                                                    className="w-28 px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 rounded-md transition duration-200 bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                    value={salesOrder.Discount}
-                                                    onChange={(e) => setSalesOrder((s) => ({ ...s, Discount: e.target.value, DiscountID: null }))}
-                                                    disabled={salesOrder.LocationID === "0"}
-                                                    placeholder="0"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col min-w-[200px]">
-                                            <DiscountDropdown
-                                                availableDiscounts={discounts}
-                                                salesOrder={salesOrder}
-                                                setSalesOrder={setSalesOrder}
-                                                disabled={salesOrder.LocationID === "0"}
-                                            />
-                                        </div>
-
-                                        {/* Active Discount Indicator */}
-                                        {(salesOrder.DiscountID || (salesOrder.Discount > 0)) && (
-                                            <div className="flex items-center pb-2">
-                                                <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                    </svg>
-                                                    {salesOrder.DiscountID ? 'Applied' : `LKR ${parseFloat(salesOrder.Discount).toLocaleString()}`}
+                        {/* Content - Scrollable */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-6">
+                                {/* Order Information Section */}
+                                <div className="mb-8">
+                                    <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Warehouse Information
+                                    </h4>
+                                    <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-lg border border-gray-200">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <div className="flex items-start">
+                                                    <span className="text-sm font-medium text-gray-500 w-28 flex-shrink-0">Warehouse ID:</span>
+                                                    <span className="text-base font-semibold text-gray-800 ml-2">{warehouseInfo.LocationID || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex items-start">
+                                                    <span className="text-sm font-medium text-gray-500 w-28 flex-shrink-0">Address:</span>
+                                                    <span className="text-base font-semibold text-gray-800 ml-2">{warehouseInfo.Address || 'N/A'}</span>
                                                 </div>
                                             </div>
-                                        )}
+                                            <div className="space-y-4">
+                                                <div className="flex items-start">
+                                                    <span className="text-sm font-medium text-gray-500 w-28 flex-shrink-0">Name:</span>
+                                                    <span className="text-base font-semibold text-gray-800 ml-2">{warehouseInfo.WarehouseName || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex items-start">
+                                                    <span className="text-sm font-medium text-gray-500 w-28 flex-shrink-0">Total Quantity:</span>
+                                                    <span className="text-base font-semibold text-blue-600 ml-2 flex items-center">
+                                                        {isLoading ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                                        ) : (
+                                                            <>
+                                                                {totalQuantity.toLocaleString()} items
+                                                                <svg className="w-4 h-4 ml-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                                </svg>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Products Section */}
+                                <div className="mb-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-lg font-semibold text-gray-700 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                            </svg>
+                                            Inventory Information
+                                            {!isLoading && (
+                                                <span className="ml-3 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                    {filteredAndSortedProducts.length} products
+                                                </span>
+                                            )}
+                                        </h4>
+
+                                        {/* Search Bar */}
+                                        {/* {!isLoading && !error && (
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search products..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                />
+                                                <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                            </div>
+                                        )} */}
                                     </div>
 
-                                    {/* Grand Total - Right Side */}
-                                    <div className="flex items-center bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-                                        <span className="text-sm font-medium text-gray-600 mr-3">Grand Total:</span>
-                                        <span className="text-lg font-bold text-blue-700">
-                                            LKR {salesOrder.TotalAmount.toLocaleString()}
-                                        </span>
-                                    </div>
+                                    {/* Loading State */}
+                                    {isLoading && (
+                                        <div className="flex items-center justify-center py-12">
+                                            <div className="text-center">
+                                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                                <p className="text-gray-600">Loading warehouse inventory...</p>
+                                            </div>
+                                        </div>
+                                    )}
 
+                                    {/* Error State */}
+                                    {error && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                                            <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                            </svg>
+                                            <h3 className="text-lg font-semibold text-red-800 mb-2">Failed to Load Data</h3>
+                                            <p className="text-red-600 mb-4">{error}</p>
+                                            <button
+                                                onClick={handleRetry}
+                                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                            >
+                                                Try Again
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Products Table */}
+                                    {!isLoading && !error && (
+                                        <div className="shadow-lg overflow-hidden border border-gray-200 rounded-lg">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                                                            onClick={() => handleSort('ProductID')}
+                                                        >
+                                                            <div className="flex items-center">
+                                                                Product ID
+                                                                {getSortIcon('ProductID')}
+                                                            </div>
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                                                            onClick={() => handleSort('Name')}
+                                                        >
+                                                            <div className="flex items-center">
+                                                                Product Name
+                                                                {getSortIcon('Name')}
+                                                            </div>
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                                                            onClick={() => handleSort('Quantity')}
+                                                        >
+                                                            <div className="flex items-center justify-end">
+                                                                Quantity
+                                                                {getSortIcon('Quantity')}
+                                                            </div>
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                                                            onClick={() => handleSort('LastUpdated')}
+                                                        >
+                                                            <div className="flex items-center justify-end">
+                                                                Last Updated
+                                                                {getSortIcon('LastUpdated')}
+                                                            </div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    <AnimatePresence>
+                                                        {productStorages.length > 0 ? (
+                                                            productStorages.map((detail, index) => (
+                                                                <motion.tr
+                                                                    key={`${detail.ProductID}-${index}`}
+                                                                    initial={{ opacity: 0, y: 10 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    exit={{ opacity: 0, y: -10 }}
+                                                                    transition={{ duration: 0.2, delay: index * 0.02 }}
+                                                                    className="hover:bg-gray-50 transition-colors duration-150"
+                                                                >
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                        {detail.ProductID || 'N/A'}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                        {detail.ProductID || 'N/A'}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${detail.Quantity > 100
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : detail.Quantity > 10
+                                                                                ? 'bg-yellow-100 text-yellow-800'
+                                                                                : 'bg-red-100 text-red-800'
+                                                                            }`}>
+                                                                            {detail.Quantity?.toLocaleString() || 0}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                                                        {formatDate(detail.LastUpdated)}
+                                                                    </td>
+                                                                </motion.tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan="4" className="px-6 py-12 text-center">
+                                                                    <div className="text-gray-500">
+                                                                        <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                                                        </svg>
+                                                                        <p className="text-lg font-medium mb-2">
+                                                                            {searchTerm ? 'No matching products found' : 'No products found'}
+                                                                        </p>
+                                                                        <p className="text-sm">
+                                                                            {searchTerm
+                                                                                ? 'Try adjusting your search terms'
+                                                                                : 'This warehouse currently has no inventory items'
+                                                                            }
+                                                                        </p>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-
                         </div>
 
                         {/* Footer */}
-                        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t">
-                            <button
-                                type="button"
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
-                                onClick={() => setOpenEditSalesOrderModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 flex items-center"
-                                onClick={addSalesOrder}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Create Sales Order
-                            </button>
+                        <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t flex-shrink-0">
+                            <div className="flex items-center text-sm text-gray-600">
+                                {!isLoading && !error && (
+                                    <>
+                                        <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        Showing {filteredAndSortedProducts.length} of {products.length} products
+                                    </>
+                                )}
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                {!isLoading && !error && products.length > 0 && (
+                                    <button
+                                        onClick={handleRetry}
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 flex items-center"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 flex items-center"
+                                    onClick={() => setOpenModal(false)}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
             </div>
-        </>
+        </AnimatePresence>
     );
 }
 
-export default SalesOrderEditModal;
+export default WarehouseInfoModal;

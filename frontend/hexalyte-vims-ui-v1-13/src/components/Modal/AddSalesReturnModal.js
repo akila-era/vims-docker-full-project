@@ -188,7 +188,7 @@ const ProductSearchDropdown = ({
     );
 };
 
-const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders}) => {
+const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders }) => {
     const [formData, setFormData] = useState({
         SalesOrderID: '',
         ReturnDate: new Date().toISOString().split('T')[0],
@@ -246,7 +246,7 @@ const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders}) => {
     //     fetchData();
     // }, []);
 
-     useEffect(() => {
+    useEffect(() => {
         const fetchData = async () => {
             const api = createAxiosInstance();
             try {
@@ -334,13 +334,23 @@ const AddSalesReturnModal = ({ isOpen, onClose, fetchReturnOrders}) => {
         return salesOrders1.map((order) => {
             const customer = customers.find(c => c.CustomerID === order.CustomerID);
             const location = warehouses.find(c => c.LocationID === order.LocationID);
+            const orderDate = new Date(order.OrderDate);
+            const formattedDate = orderDate.toLocaleString("en-US", {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true,
+            });
             return {
                 value: order.OrderID,
-                label: `#${order.OrderID} Customer - ${customer ? customer.Name : "Unknown"} Location - ${location?.WarehouseName || "Unknown"}`
+                label: `#${order.OrderID} (Customer - ${customer ? customer.Name : "Unknown"}) (Location - ${location?.WarehouseName || "Unknown"}) (Date - ${formattedDate || "Unknown"})`
+
             };
         });
     }, [salesOrders1, customers, warehouses]);
-
     // Add exchange item function
     const addExchangeItem = (e) => {
         e.preventDefault();

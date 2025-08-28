@@ -237,10 +237,10 @@ const ReturnOrders = () => {
     },
     {
       id: "qty",
-      name: "Total Quantity",
+      name: "Total Return Quantity",
       selector: row => (row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) ?? 0),
       sortable: true,
-      width: "160px",
+      width: "200px",
       cell: row => (
         <div className="text-sm font-medium text-gray-900">
           {row.returnorderitems?.reduce((s, it) => s + (it.Quantity || 0), 0) || 0}

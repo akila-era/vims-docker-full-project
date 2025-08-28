@@ -145,7 +145,7 @@ function WarehouseStockTransfer() {
         const api = createAxiosInstance();
         try {
             const res = await api.post('transfer/bulk', finalTransfers);
-            console.log(res)
+            // console.log(res)
             if (res.status === 200 || res.status === 201) {
                 Swal.fire({
                     title: "Success",

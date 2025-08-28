@@ -10,6 +10,7 @@ import handleUserLogout from "../../api/logout";
 import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router-dom";
 import { createAxiosInstance } from "api/axiosInstance";
+import WarehouseInfoModal from "components/Modal/warehouseInfo";
 
 // const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -19,6 +20,8 @@ function ManageWarehouses() {
     const [openWarehouseUpdateModal, setOpenWarehouseUpdateModal] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [openModal, setOpenModal] = useState(null);
+
 
     const { setAuth } = useAuth();
     const history = useHistory();
@@ -389,6 +392,7 @@ function ManageWarehouses() {
                                     <p className="mt-1 text-sm text-gray-400">Try adjusting your search or add a new warehouse</p>
                                 </div>
                             }
+                            onRowClicked={(row) => setOpenModal(row)}
                         />
                     </div>
 
@@ -406,6 +410,10 @@ function ManageWarehouses() {
                     warehouseInfo={openWarehouseUpdateModal}
                     editWarehouse={editWarehouse}
                 />
+            )}
+
+            {openModal && (
+                <WarehouseInfoModal setOpenModal={setOpenModal} warehouseInfo={openModal} />
             )}
         </>
     );
