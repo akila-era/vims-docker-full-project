@@ -385,7 +385,7 @@ function SalesOrders() {
       if (response.status === 200) {
         // setSalesOrders(() => response.data.salesorders);
 
-      setSalesOrders(() => response.data.salesorders.filter(order => order.isActive !== false));
+        setSalesOrders(() => response.data.salesorders.filter(order => order.isActive !== false));
 
       }
       setIsLoading(false);
@@ -736,7 +736,7 @@ function SalesOrders() {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+          <div className="bg-white p-4 rounded-lg shadow-sm ">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -764,6 +764,58 @@ function SalesOrders() {
                   </svg>
                   Refresh
                 </button>
+              </div>
+            </div>
+          </div>
+
+
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            {/* Order Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Total Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{salesOrders.length}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Completed Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {salesOrders.filter(order => order.Status?.toLowerCase() === "completed").length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
+                    <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Pending Orders</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {salesOrders.filter(order => order.Status?.toLowerCase() === "pending").length}
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -824,54 +876,7 @@ function SalesOrders() {
             />
           </div>
 
-          {/* Order Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                  <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Total Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">{salesOrders.length}</h3>
-                </div>
-              </div>
-            </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Completed Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {salesOrders.filter(order => order.Status?.toLowerCase() === "completed").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
-                  <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Pending Orders</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {salesOrders.filter(order => order.Status?.toLowerCase() === "pending").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

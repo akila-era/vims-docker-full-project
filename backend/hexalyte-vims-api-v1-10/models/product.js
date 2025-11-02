@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     Description: DataTypes.STRING,
     BuyingPrice: DataTypes.DECIMAL(10, 2),
     SellingPrice: DataTypes.DECIMAL(10, 2),
-    QuantityInStock: DataTypes.INTEGER,
+    QuantityInStock: DataTypes.DECIMAL(10, 2),
     SupplierID: {
       type: DataTypes.INTEGER,
       references: {

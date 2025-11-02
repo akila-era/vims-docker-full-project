@@ -69,6 +69,7 @@ const updateProductById = catchAsync(async (req, res) => {
 
 const updateProductQuantityById = catchAsync(async (req, res) => {
     const updatedProduct = await productServices.updateProductQuantityById(req.params.id, req.body)
+    // console.log(updatedProduct);
     if(updatedProduct === "no product found") {
         return res.status(httpStatus.NOT_FOUND).send({
             message: `Invalid Product ID. Product ID does not exists`

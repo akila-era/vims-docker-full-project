@@ -15,7 +15,7 @@ const createsalesorder = {
     OrderItems: joi.array().items(
       joi.object({
         ProductID: joi.number().integer().required(),
-        Quantity: joi.number().integer().required(),
+        Quantity: joi.any(),
         UnitPrice: joi.number().precision(2).min(0).required(),
         ProductName: joi.string(),
         TotalPrice: joi.number()

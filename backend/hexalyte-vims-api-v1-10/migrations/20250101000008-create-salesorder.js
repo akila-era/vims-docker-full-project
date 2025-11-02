@@ -20,7 +20,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       TotalAmount: {
-        type: Sequelize.DECIMAL
+        type: Sequelize.DECIMAL(10, 2)
       },
       Status: {
         type: Sequelize.STRING

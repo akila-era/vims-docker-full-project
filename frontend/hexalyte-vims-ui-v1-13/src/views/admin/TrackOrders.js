@@ -666,21 +666,21 @@ function TrackOrders() {
 
   // Filter data based on search query
   const filteredOrdersData = data.filter(order => {
-    const matchesSearch = 
-      (order.OrderID && order.OrderID.toString().includes(searchQuery)) || 
+    const matchesSearch =
+      (order.OrderID && order.OrderID.toString().includes(searchQuery)) ||
       (order.CustomerName && order.CustomerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.TotalAmount && order.TotalAmount.toString().includes(searchQuery)) ||
       (order.Status && order.Status.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     return matchesSearch;
   });
 
   const filteredDeliveryData = deliveryData.filter(delivery => {
-    const matchesSearch = 
-      (delivery.DeliveryID && delivery.DeliveryID.toString().includes(searchQuery)) || 
+    const matchesSearch =
+      (delivery.DeliveryID && delivery.DeliveryID.toString().includes(searchQuery)) ||
       (delivery.OrderID && delivery.OrderID.toString().includes(searchQuery)) ||
       (delivery.DeliveryStatus && delivery.DeliveryStatus.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     return matchesSearch;
   });
 
@@ -714,8 +714,8 @@ function TrackOrders() {
     {
       name: "Delivery Date",
       selector: row => new Date(row.DeliveryDate).toLocaleDateString('en-US', {
-        year: 'numeric', 
-        month: 'short', 
+        year: 'numeric',
+        month: 'short',
         day: 'numeric'
       }),
       sortable: true,
@@ -759,8 +759,8 @@ function TrackOrders() {
     {
       name: "Order Date",
       selector: row => new Date(row.OrderDate).toLocaleDateString('en-US', {
-        year: 'numeric', 
-        month: 'short', 
+        year: 'numeric',
+        month: 'short',
         day: 'numeric'
       }),
       sortable: true,
@@ -792,7 +792,7 @@ function TrackOrders() {
     {
       name: "Actions",
       cell: row => (
-        <button 
+        <button
           onClick={() => setOpenProceedDeliveryModal(row)}
           className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-200"
         >
@@ -839,7 +839,7 @@ function TrackOrders() {
       }
     }
 
-    async function fetchDeliveryAddress(){
+    async function fetchDeliveryAddress() {
       try {
         setIsSubLoading(true);
         // const addressRes = await axios.get(`${BASE_URL}customeraddress/${info.DeliveryAddressID}`, { withCredentials: true });
@@ -866,7 +866,7 @@ function TrackOrders() {
         const orderStatusHistoryRes = await api.get(`orderstatushistory`)
 
         if (orderStatusHistoryRes.status === 200) {
-          setOrderStatusHistory(() => orderStatusHistoryRes.data.orderstatushistories.filter((orderSH) => 
+          setOrderStatusHistory(() => orderStatusHistoryRes.data.orderstatushistories.filter((orderSH) =>
             orderSH.salesorderOrderID === info.OrderID).reverse());
         }
         setIsSubLoading(false);
@@ -879,7 +879,7 @@ function TrackOrders() {
     async function updateDeliveryInfo() {
       try {
         setIsSubLoading(true);
-        const updateData = { ...deliveryInfo, PaymentStatus: 'NULL'};
+        const updateData = { ...deliveryInfo, PaymentStatus: 'NULL' };
         delete updateData.DeliveryID;
         delete updateData.createdAt;
         delete updateData.updatedAt;
@@ -897,7 +897,7 @@ function TrackOrders() {
             salesorderOrderID: info.OrderID,
           };
           // await axios.post(`${BASE_URL}orderstatushistory`, status, {withCredentials: true });
-          await api.post(`orderstatushistory`,status);
+          await api.post(`orderstatushistory`, status);
         }
 
         setIsSubLoading(false);
@@ -955,13 +955,13 @@ function TrackOrders() {
                     <span className="font-semibold text-gray-900">{info.TrackingNumber || "N/A"}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <select
                     className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                     disabled={!editable}
                     value={deliveryInfo.DeliveryStatus}
-                    onChange={(e) => setDeliveryInfo((de) => ({...de, DeliveryStatus: e.target.value }))}
+                    onChange={(e) => setDeliveryInfo((de) => ({ ...de, DeliveryStatus: e.target.value }))}
                   >
                     <option value="SUBMITTED">SUBMITTED</option>
                     <option value="PACKED">PACKED</option>
@@ -969,7 +969,7 @@ function TrackOrders() {
                     <option value="DELIVERED">DELIVERED</option>
                     <option value="RETURN">RETURN</option>
                   </select>
-                  
+
                   {!editable ? (
                     <button
                       className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
@@ -993,7 +993,7 @@ function TrackOrders() {
                   )}
                 </div>
               </div>
-              
+
               <div className="bg-white p-4 rounded-lg shadow-sm">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Delivery Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -1008,7 +1008,7 @@ function TrackOrders() {
                     <p className="text-gray-900">{info.Carrier || "N/A"}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-1">Delivery Date</div>
@@ -1026,7 +1026,7 @@ function TrackOrders() {
                       className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       value={deliveryInfo.EstimatedDeliveryDate.slice(0, 10)}
                       readOnly={!editable}
-                      onChange={(e) => setDeliveryInfo((de) => ({...de, EstimatedDeliveryDate: e.target.value }))}
+                      onChange={(e) => setDeliveryInfo((de) => ({ ...de, EstimatedDeliveryDate: e.target.value }))}
                     />
                   </div>
                   <div>
@@ -1036,12 +1036,12 @@ function TrackOrders() {
                       className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       value={deliveryInfo.ActualDeliveryDate.slice(0, 10)}
                       readOnly={!editable}
-                      onChange={(e) => setDeliveryInfo((de) => ({...de, ActualDeliveryDate: e.target.value }))}
+                      onChange={(e) => setDeliveryInfo((de) => ({ ...de, ActualDeliveryDate: e.target.value }))}
                     />
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-white p-4 rounded-lg shadow-sm">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Status History</h3>
                 <div className="overflow-x-auto">
@@ -1102,7 +1102,7 @@ function TrackOrders() {
         console.log(error)
       }
       setIsLoading(false);
-      
+
       // if (error.status === 500 && error.response?.data?.error.includes("Please authenticate")) {
       //   localStorage.clear();
       //   history.push('/auth/login');
@@ -1129,7 +1129,7 @@ function TrackOrders() {
         console.log(error)
       }
       setIsLoading(false);
-      
+
       // if (error.status === 500 && error.response?.data?.error.includes("Please authenticate")) {
       //   sessionStorage.clear();
       //   history.push('/auth/login');
@@ -1142,7 +1142,7 @@ function TrackOrders() {
     //   handleUserLogout().then(() => setAuth(() => false)).then(() => history.push("/auth/login"));
     //   return;
     // }
-    
+
     fetchSalesOrders();
     fetchDeliveryDetails();
   }, []);
@@ -1162,7 +1162,7 @@ function TrackOrders() {
           </div>
 
           {/* Search Bar */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1197,6 +1197,59 @@ function TrackOrders() {
             </div>
           </div>
 
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Orders to Deliver</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{data.length}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">Delivered</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {deliveryData.filter(delivery => delivery.DeliveryStatus === "DELIVERED").length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
+                    <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-5">
+                    <p className="text-sm font-medium text-gray-500">In Progress</p>
+                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                      {deliveryData.filter(delivery => delivery.DeliveryStatus === "IN PROGRESS").length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           {/* Tabs */}
           <div className="mb-6">
             <div className="sm:hidden">
@@ -1213,27 +1266,25 @@ function TrackOrders() {
               <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                   <button
-                    className={`${
-                      openTab === 1
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    className={`${openTab === 1
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                     onClick={() => setOpenTab(1)}
                   >
                     <div className="flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                       <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                       </svg>
                       Add to Delivery
                     </div>
                   </button>
                   <button
-                    className={`${
-                      openTab === 2
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    className={`${openTab === 2
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                     onClick={() => setOpenTab(2)}
                   >
                     <div className="flex items-center">
@@ -1248,13 +1299,17 @@ function TrackOrders() {
             </div>
           </div>
 
+
+
+          
+
           {/* Content */}
           <div className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
             <div className="p-1">
               {/* Add to Delivery Tab */}
               <div className={openTab === 1 ? "block" : "hidden"} id="link1">
-                <DataTable 
-                  columns={columns} 
+                <DataTable
+                  columns={columns}
                   data={filteredOrdersData}
                   customStyles={customStyles}
                   highlightOnHover
@@ -1283,8 +1338,8 @@ function TrackOrders() {
 
               {/* In Transit Tab */}
               <div className={openTab === 2 ? "block" : "hidden"} id="link2">
-                <DataTable 
-                  columns={deliveryColumns} 
+                <DataTable
+                  columns={deliveryColumns}
                   data={filteredDeliveryData}
                   customStyles={customStyles}
                   highlightOnHover
@@ -1315,64 +1370,16 @@ function TrackOrders() {
             </div>
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                  <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Orders to Deliver</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">{data.length}</h3>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                  <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">Delivered</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {deliveryData.filter(delivery => delivery.DeliveryStatus === "DELIVERED").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
-                  <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5">
-                  <p className="text-sm font-medium text-gray-500">In Progress</p>
-                  <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                    {deliveryData.filter(delivery => delivery.DeliveryStatus === "IN PROGRESS").length}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
       {openProceedDeliveryModal && (
-        <TrackOrderAddModal 
-          orderInfo={openProceedDeliveryModal} 
+        <TrackOrderAddModal
+          orderInfo={openProceedDeliveryModal}
           closeModal={setOpenProceedDeliveryModal}
-          fetchSalesOrders={fetchSalesOrders} 
-          fetchDeliveryDetails={fetchDeliveryDetails} 
+          fetchSalesOrders={fetchSalesOrders}
+          fetchDeliveryDetails={fetchDeliveryDetails}
         />
       )}
     </>

@@ -21,7 +21,7 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2)
       },
       QuantityInStock: {
-        type: Sequelize.INTEGER
+        type: Sequelize.DECIMAL(10, 2)
       },
       CategoryID: {
         type: Sequelize.INTEGER,

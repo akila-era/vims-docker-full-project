@@ -4,26 +4,26 @@ const Category = db.category;
 const Supplier = db.supplier;
 const Product = db.product;
 
-const getProductByID = async(productID) => {
+const getProductByID = async (productID) => {
 
     const product = await Product.findByPk(productID)
     return product
 
 }
 
-const addProduct = async(params) => {
+const addProduct = async (params) => {
 
     const { Name, Description, BuyingPrice, SellingPrice, QuantityInStock, CategoryID, SupplierID } = params
 
     const category = await Category.findByPk(CategoryID)
 
-    if(category == null){
+    if (category == null) {
         return "no category found"
     }
 
     const supplier = await Supplier.findByPk(SupplierID)
 
-    if(supplier == null){
+    if (supplier == null) {
         return "no supplier found"
     }
 
@@ -44,19 +44,19 @@ const addProduct = async(params) => {
 
 }
 
-const updateProductById = async(productId, params) => {
+const updateProductById = async (productId, params) => {
 
     const { Name, Description, BuyingPrice, SellingPrice, QuantityInStock, CategoryID, SupplierID } = params
 
     const category = await Category.findByPk(CategoryID)
-    
-    if(category === null){
+
+    if (category === null) {
         return "no category found"
     }
 
     const supplier = await Supplier.findByPk(SupplierID)
 
-    if(supplier == null){
+    if (supplier == null) {
         return "no supplier found"
     }
 
@@ -78,18 +78,18 @@ const updateProductById = async(productId, params) => {
 
 }
 
-const updateProductQuantityById = async(productId, params) => {
+const updateProductQuantityById = async (productId, params) => {
 
-    const {QuantityInStock, OrderType, TransactionType} = params
+    const { QuantityInStock, OrderType, TransactionType } = params
 
     const product = await Product.findByPk(productId)
 
-    if(product == null){
+    if (product == null) {
         return "no product found"
     }
-
-    const currentQuantity = product.QuantityInStock
-
+    // console.log(QuantityInStock);
+    const currentQuantity = Number(product.QuantityInStock)
+    // console.log(currentQuantity)
     // if(TransactionType === "PurchaseOrder" && OrderType === "FULFILL"){
     //     const newQuantity = currentQuantity + QuantityInStock
     //     const updatedProduct = await Product.update({QuantityInStock: newQuantity}, { where: { productId } })
@@ -112,27 +112,28 @@ const updateProductQuantityById = async(productId, params) => {
     //     return updatedProduct
     // }
 
-    if(TransactionType === "FULFILL" && OrderType === "purchaseOrder"){
-        const newQuantity = currentQuantity + QuantityInStock
-        const updatedProduct = await Product.update({QuantityInStock: newQuantity}, { where: { productId } })
+    if (TransactionType === "FULFILL" && OrderType === "purchaseOrder") {
+        const newQuantity = currentQuantity + Number(QuantityInStock)
+        console.log("new qty"+newQuantity)
+        const updatedProduct = await Product.update({ QuantityInStock: newQuantity }, { where: { ProductID: productId } })
         return updatedProduct
-    } else if (TransactionType === "RETURN" && OrderType === "purchaseOrder"){
+    } else if (TransactionType === "RETURN" && OrderType === "purchaseOrder") {
         if (currentQuantity === 0) return "Quantity is zero"
-        if (QuantityInStock > currentQuantity ) return Only `${currentQuantity} is left in stock`
-        const newQuantity = currentQuantity - QuantityInStock
-        const updatedProduct = await Product.update({QuantityInStock: newQuantity}, {where: { productId } })
+        if (QuantityInStock > currentQuantity) return `Only${currentQuantity} is left in stock`
+        const newQuantity = currentQuantity - Number(QuantityInStock)
+        const updatedProduct = await Product.update({ QuantityInStock: newQuantity }, { where: { ProductID: productId } })
         return updatedProduct
     } else if (TransactionType === "FULFILL" && OrderType === "salesOrder") {
         if (currentQuantity === 0) return "Quantity is zero"
-        if (QuantityInStock > currentQuantity ) return Only `${currentQuantity} is left in stock`
-        const newQuantity = currentQuantity - QuantityInStock
-        const updatedProduct = await Product.update({QuantityInStock: newQuantity}, {where: { productId } })
+        if (QuantityInStock > currentQuantity) return `Only ${currentQuantity} is left in stock`
+        const newQuantity = currentQuantity - Number(QuantityInStock)
+        const updatedProduct = await Product.update({ QuantityInStock: newQuantity }, { where: { ProductID: productId } })
         return updatedProduct
-    } else if (TransactionType === "RETURN" && OrderType === "salesOrder"){
-        const newQuantity = currentQuantity + QuantityInStock
-        const updatedProduct = await Product.update({QuantityInStock: newQuantity}, { where: { productId } })
+    } else if (TransactionType === "RETURN" && OrderType === "salesOrder") {
+        const newQuantity = currentQuantity + Number(QuantityInStock)
+        const updatedProduct = await Product.update({ QuantityInStock: newQuantity }, { where: { ProductID: productId } })
         return updatedProduct
-    }
+    }
 
 
     // const product = await Product.update({ QuantityInStock }, { where: { ProductID: productId } })
@@ -141,11 +142,11 @@ const updateProductQuantityById = async(productId, params) => {
 
 }
 
-const deleteProductById = async(productId) => {
+const deleteProductById = async (productId) => {
 
     // const product = getProductByID(productId)
-    
-    return await Product.update({isActive: 0}, { where: { ProductID: productId } })
+
+    return await Product.update({ isActive: 0 }, { where: { ProductID: productId } })
     // return Product.destroy({ where: { ProductID: productId } })
 
 }

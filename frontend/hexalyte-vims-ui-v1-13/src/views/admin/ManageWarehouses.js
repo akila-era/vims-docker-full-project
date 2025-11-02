@@ -10,6 +10,7 @@ import handleUserLogout from "../../api/logout";
 import { useAuth } from "../../context/AuthContext";
 import { useHistory } from "react-router-dom";
 import { createAxiosInstance } from "api/axiosInstance";
+import WarehouseInfoModal from "components/Modal/warehouseInfo";
 
 // const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -19,6 +20,8 @@ function ManageWarehouses() {
     const [openWarehouseUpdateModal, setOpenWarehouseUpdateModal] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [openModal, setOpenModal] = useState(null);
+
 
     const { setAuth } = useAuth();
     const history = useHistory();
@@ -121,7 +124,7 @@ function ManageWarehouses() {
         try {
             // const res = await axios.put(`${BASE_URL}location/${warehouseData.LocationID}`, updatedData, { withCredentials: true });
             const api = createAxiosInstance();
-            const res = await api.put(`location/${warehouseData.LocationID}`,updatedData)
+            const res = await api.put(`location/${warehouseData.LocationID}`, updatedData)
             if (res.status === 200) {
                 setOpenWarehouseUpdateModal(() => false);
                 Swal.fire({
@@ -294,7 +297,7 @@ function ManageWarehouses() {
                     </div>
 
                     {/* Search and Filter Bar */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div className="bg-white p-4 rounded-lg shadow-sm mb-">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-grow">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -326,6 +329,43 @@ function ManageWarehouses() {
                         </div>
                     </div>
 
+                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+
+                        {/* Warehouse Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-">
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                                        <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Total Warehouses</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{warehouses.length}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                                        <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Warehouse Locations</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                                            {new Set(warehouses.map(warehouse => warehouse.Address)).size}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Data Table */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                         <DataTable
@@ -352,42 +392,11 @@ function ManageWarehouses() {
                                     <p className="mt-1 text-sm text-gray-400">Try adjusting your search or add a new warehouse</p>
                                 </div>
                             }
+                            onRowClicked={(row) => setOpenModal(row)}
                         />
                     </div>
 
-                    {/* Warehouse Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Total Warehouses</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{warehouses.length}</h3>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Warehouse Locations</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                                        {new Set(warehouses.map(warehouse => warehouse.Address)).size}
-                                    </h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -401,6 +410,10 @@ function ManageWarehouses() {
                     warehouseInfo={openWarehouseUpdateModal}
                     editWarehouse={editWarehouse}
                 />
+            )}
+
+            {openModal && (
+                <WarehouseInfoModal setOpenModal={setOpenModal} warehouseInfo={openModal} />
             )}
         </>
     );

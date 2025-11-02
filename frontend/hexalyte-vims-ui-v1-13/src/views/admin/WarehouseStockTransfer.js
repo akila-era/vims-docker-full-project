@@ -63,7 +63,7 @@ function WarehouseStockTransfer() {
         try {
             const api = createAxiosInstance();
             const response = await api.get('product');
-            setProducts(response.data.allProducts);
+            setProducts(response.data.allProducts.filter(pro => pro.isActive !== false));
             // console.log(response)
         } catch (error) {
             console.log(error);
@@ -145,7 +145,7 @@ function WarehouseStockTransfer() {
         const api = createAxiosInstance();
         try {
             const res = await api.post('transfer/bulk', finalTransfers);
-            console.log(res)
+            // console.log(res)
             if (res.status === 200 || res.status === 201) {
                 Swal.fire({
                     title: "Success",
@@ -477,7 +477,7 @@ function WarehouseStockTransfer() {
                     </div>
 
                     {/* Search and Filter Bar */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div className="bg-white p-4 rounded-lg shadow-sm mb-">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-grow">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -514,6 +514,69 @@ function WarehouseStockTransfer() {
                         </div>
                     </div>
 
+                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-">
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                                        <Package className="h-6 w-6 text-blue-600" />
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Total Transfers</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{transfers.length}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                                        <TrendingUp className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Active Transfers</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                                            {transfers.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-purple-100">
+                                        <Warehouse className="h-6 w-6 text-purple-600" />
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Warehouses</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{warehouses.length}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-indigo-100">
+                                        <ArrowRight className="h-6 w-6 text-indigo-600" />
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">This Month</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">
+                                            {transfers.filter(t => {
+                                                const transferDate = new Date(t.transferDate);
+                                                const currentDate = new Date();
+                                                return transferDate.getMonth() === currentDate.getMonth() &&
+                                                    transferDate.getFullYear() === currentDate.getFullYear();
+                                            }).length}
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
                     {/* Data Table */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                         <DataTable
@@ -542,65 +605,7 @@ function WarehouseStockTransfer() {
                         />
                     </div>
 
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                                    <Package className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Total Transfers</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{transfers.length}</h3>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                                    <TrendingUp className="h-6 w-6 text-green-600" />
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Active Transfers</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                                        {transfers.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length}
-                                    </h3>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-purple-100">
-                                    <Warehouse className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Warehouses</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{warehouses.length}</h3>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-indigo-100">
-                                    <ArrowRight className="h-6 w-6 text-indigo-600" />
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">This Month</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">
-                                        {transfers.filter(t => {
-                                            const transferDate = new Date(t.transferDate);
-                                            const currentDate = new Date();
-                                            return transferDate.getMonth() === currentDate.getMonth() &&
-                                                transferDate.getFullYear() === currentDate.getFullYear();
-                                        }).length}
-                                    </h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 

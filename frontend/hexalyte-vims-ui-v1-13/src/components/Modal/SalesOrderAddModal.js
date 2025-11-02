@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom/cjs/react-router-dom";
 import handlePrint from "components/Print/handlePrint";
 import DiscountDropdown from "components/Dropdowns/DiscountDropdown";
 import { createAxiosInstance } from "api/axiosInstance";
+import Select from 'react-select';
 
 // const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -209,6 +210,8 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
     DiscountID: null,
     PaymentStatus: 'UNPAID'
   });
+
+  // console.log(salesOrder);
   const [salesItem, setSalesItem] = useState({
     ProductID: "0",
     SellingPrice: 0,
@@ -216,6 +219,24 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
   });
   const [salesItems, setSalesItems] = useState([]);
   const [discounts, setDiscounts] = useState([])
+
+
+
+  const warehouseOptions = useMemo(() => {
+    return warehouses.map((warehouse) => ({
+      value: warehouse.LocationID,
+      label: warehouse.WarehouseName,
+    }));
+  }, [warehouses]);
+
+
+  const customerOptions = useMemo(() => {
+    return customers.map((customer) => ({
+      value: customer.CustomerID,
+      label: customer.Name,
+    }));
+  }, [customers]);
+
 
   function addSalesItem(e) {
     e.preventDefault();
@@ -513,7 +534,7 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
       const api = createAxiosInstance();
       const customersRes = await api.get(`customer`)
       if (customersRes.status === 200) {
-        setCustomers(() => customersRes.data.allCustomers)
+        setCustomers(() => customersRes.data.allCustomers.filter(item => item.isActive !== false))
       }
     } catch (error) {
       if (error.status === 404 && error.response.data.message === "No Customers Found") {
@@ -545,7 +566,7 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
       const api = createAxiosInstance();
       const discountsRes = await api.get(`discounts/sales`)
       if (discountsRes.status === 200) {
-        console.log(discountsRes.data.discounts.filter(discount => discount.isActive === true))
+        // console.log(discountsRes.data.discounts.filter(discount => discount.isActive === true))
         setDiscounts(() => discountsRes.data.discounts.filter(discount => discount.isActive !== false))
       }
     } catch (error) {
@@ -568,6 +589,8 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
     fetchProductStorages();
     setSelectedStorage(() => productStorage.filter((ps) => ps.LocationID.toString() === salesOrder.LocationID));
   }, [salesOrder.LocationID]);
+
+  // console.log(selectedStorage)
 
   useEffect(() => {
     if (salesItem.ProductID === "0") {
@@ -624,7 +647,7 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                   Order Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse</label>
                     <div className="relative">
                       <select
@@ -643,11 +666,37 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                         {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
                         </svg> */}
-                      </div>
+                      {/* </div>
+                    </div>
+                  </div> */} 
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse</label>
+                    <div className="relative">
+                      <Select
+                        options={warehouseOptions} // Array of options for warehouses
+                        value={warehouseOptions.find(option => option.value === salesOrder.LocationID)} // Display selected warehouse
+                        onChange={(selectedOption) => setSalesOrder((s) => ({ ...s, LocationID: String(selectedOption?.value) }))} className={`w-full ${salesOrder.LocationID === "0" ? 'border-red-300' : 'border-gray-300'}`}
+                        placeholder="Select Warehouse"
+                        isSearchable // Allows searching through options
+                      />
                     </div>
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                    <div className="relative">
+                      <Select
+                        options={customerOptions} // Array of options for warehouses
+                        value={customerOptions.find(option => option.value === salesOrder.CustomerID)} // Display selected warehouse
+                        onChange={(selectedOption) => setSalesOrder((s) => ({ ...s, CustomerID: String(selectedOption?.value) }))} className={`w-full ${salesOrder.CustomerID === "0" ? 'border-red-300' : 'border-gray-300'}`}
+                        placeholder="Select Warehouse"
+                        isSearchable // Allows searching through options
+                      />
+                    </div>
+                  </div>
+
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                     <div className="relative flex gap-3">
                       <select
@@ -670,9 +719,9 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                         <i className="fas fa-user-plus"></i>
                       </Link>
                     </div>
-                  </div>
+                  </div> */}
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Order Type</label>
                     <div className="relative">
                       <select
@@ -688,9 +737,9 @@ function SalesOrderAddModal({ setOpenAddSalesOrderModal, loadSalesOrders }) {
                         {/* <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
                         </svg> */}
-                      </div>
+                  {/* </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Order Status</label>

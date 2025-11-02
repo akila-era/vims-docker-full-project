@@ -549,7 +549,7 @@ export default function Sidebar() {
               className="text-center text-white mr-0 inline-block whitespace-nowrap text-xl font-bold px-0"
             >
               <i className="fas fa-cubes mr-2"></i>
-              Hexa - VIMS
+              ARI
             </label>
           </div>
 
@@ -603,7 +603,7 @@ export default function Sidebar() {
             </div>
 
             {/* Search form */}
-            <div className="px-4 pt-2 pb-6">
+            {/* <div className="px-4 pt-2 pb-6">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <i className="fas fa-search text-blue-300"></i>
@@ -614,7 +614,7 @@ export default function Sidebar() {
                   className="pl-10 pr-4 py-2 w-full bg-blue-800 text-white placeholder-blue-300 rounded-lg border border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Navigation Sections */}
             <div className="px-4 py-2">

@@ -1,308 +1,4 @@
-// import DataTable from "react-data-table-component";
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import checkToken from "../../api/checkToken";
-// import { useHistory } from "react-router-dom";
-// import { useAuth } from "context/AuthContext";
-// import StorageAddModal from "components/Modal/ProductStorageAddModal";
-// import Swal from "sweetalert2";
-// import InvenotoryMenu from "../../components/Menus/InventoryMenu";
-// import InventoryEditModel from "components/Modal/ProductStorageEditModel";
-// import ProductInfoModal from "components/Modal/ProductStorageInfo";
-// import handleUserLogout from "api/logout";
 
-// const BASE_URL = process.env.REACT_APP_BASE_URL;
-
-// function ManageInventory(props) {
-
-//     const [productStorage, setProductStorage] = useState([]);
-//     const [openModal, setOpenModal] = useState(null);
-//     const [openProductStorageModal, setProductStorageAddModal] = useState(false);
-//     const [openInventoryUpdateModal, setOpenInventoryUpdateModal] = useState(null);
-
-
-
-//     const history = useHistory();
-
-//     const { setAuth } = useAuth();
-
-//     async function loadProductStorages() {
-//         try {
-
-//             const tokenStatus = await checkToken();
-
-//             if (!tokenStatus) {
-//                 setAuth(() => false)
-//                 history.push("/auth/login");
-//                 return
-//             }
-
-//             const productStorages = await axios.get(`${BASE_URL}productstorage`, { withCredentials: true });
-//             if (productStorages.status === 200) {
-//                 console.log(productStorages.data);
-//                 setProductStorage(() => productStorages.data)
-//             } else {
-//                 console.log(productStorages);
-//             }
-//         } catch (error) {
-
-//             if (error.status === 404) {
-//                 console.log(error.response.data.message);
-//             } else if (error.status === 500 && error.response?.data?.error.includes("Please authenticate")) {
-//                 sessionStorage.clear()
-//                 history.push('/auth/login')
-//             } else {
-//                 console.log(error.response.data.message);
-//             }
-
-//         }
-//     }
-
-//     async function addProductStorage(StorageData) {
-
-//         try {
-
-
-//             const res = await axios.post(`${BASE_URL}productstorage`, StorageData, {withCredentials: true});
-//             console.log(res);
-
-//             if (res.status === 200) {
-//                 // const date = Date();
-//                 // console.log(date);
-//                 // const newdate = new Date().toISOString().slice(0, 19).replace("T", " ")
-//                 // console.log(newdate);
-//                 if (res.data.newProductStorage.message === 'New inventory record created successfully') {
-//                     Swal.fire({
-//                         title: "Success",
-//                         text: "Inventory Added Success",
-//                         icon: "success"
-//                     })
-//                     loadProductStorages();
-//                     setProductStorageAddModal(false);
-//                 }
-
-//                 if (res.data.newProductStorage.message === 'Inventory updated successfully.') {
-//                     Swal.fire({
-//                         title: "Success",
-//                         text: `Inventory Update Success. New Quantity`,
-//                         icon: "success"
-//                     })
-//                     console.log();
-//                     loadProductStorages();
-//                     setProductStorageAddModal(false);
-
-//                 }
-
-
-//             }
-
-
-
-
-
-//         } catch (error) {
-//             console.log(error);
-//         }
-//     }
-
-
-//     async function deleteProductStorage(productStorageRow) {
-//         try {
-//             const result = await Swal.fire({
-//                 title: "Confirm Delete",
-//                 text: `Are you sure you want to delete this inventory record?`,
-//                 icon: "warning",
-//                 showCancelButton: true,
-//                 confirmButtonColor: "#3085d6",
-//                 cancelButtonColor: "#d33",
-//                 confirmButtonText: "Yes, delete it!",
-//             });
-
-//             if (result.isConfirmed) {
-//                 const response = await axios.delete(
-//                     `${BASE_URL}productstorage/${productStorageRow.ProductID}/${productStorageRow.LocationID}`, {withCredentials: true}
-//                 );
-//                 console.log(response);
-//                 if (response.data.deletedProductStorage.status === 'success') {
-//                     Swal.fire(
-//                         'Deleted!',
-//                         'The inventory record has been deleted.',
-//                         'success'
-//                     );
-//                     loadProductStorages();
-//                 }
-//             }
-//         } catch (error) {
-//             console.error(error);
-
-//         }
-//     }
-
-//     async function editInventory(inventoryData) {
-
-//         const date = Date();
-
-//         const updatedData = {
-//             Quantity: inventoryData.Quantity,
-//             LastUpdated: date,
-//         }
-
-//         const res = await axios.put(`${BASE_URL}productstorage/${inventoryData.ProductID}/${inventoryData.LocationID}`, updatedData, {withCredentials: true});
-//         console.log(res);
-//         console.log(date)
-//         if (res.status === 200) {
-//             setOpenInventoryUpdateModal(() => false);
-//             Swal.fire({
-//                 title: "Success",
-//                 text: "Inventory Details Updated successfully",
-//                 icon: "success"
-//             })
-//             loadProductStorages();
-//         } else {
-//             Swal.fire({
-//                 title: "Error",
-//                 text: "Inventory Details Update Failed",
-//                 icon: "error"
-//             })
-//         }
-
-//     }
-
-//     useEffect(() => {
-
-//         if (!checkToken()) {
-//             handleUserLogout().then(() => setAuth(() => false)).then(() => history.push("/auth/login"));
-//             return
-//         }
-
-//         loadProductStorages();
-//     }, [])
-
-//     const customStyles = {
-//         headRow: {
-//             style: {
-//                 border: 'none',
-//             },
-//         },
-//         headCells: {
-//             style: {
-//                 color: '#202124',
-//                 fontSize: '14px',
-//             },
-//         },
-//         rows: {
-//             highlightOnHoverStyle: {
-//                 backgroundColor: 'rgb(219, 234, 254)',
-//                 borderBottomColor: '#FFFFFF',
-//                 outline: '1px solid #FFFFFF',
-//             },
-//         },
-//         pagination: {
-//             style: {
-//                 border: 'none',
-//             },
-//         },
-//     };
-
-//     const columns = [
-//         {
-//             name: 'Product ID',
-//             selector: row => row.ProductID,
-//             sortable: true,
-//             style: {
-//                 color: '#202124',
-//                 fontSize: '14px',
-//                 width: '20px',
-//                 fontWeight: 500,
-//             },
-//         },
-//         {
-//             name: 'Location ID',
-//             selector: row => row.LocationID,
-//             sortable: true,
-//             grow: 2,
-//             style: {
-//                 color: '#202124',
-//                 fontSize: '14px',
-//                 fontWeight: 500,
-//             },
-//         },
-//         {
-//             name: 'Quantity',
-//             selector: row => row.Quantity,
-//             sortable: true,
-//             style: {
-//                 color: 'rgba(0,0,0,.54)',
-//             },
-//         },
-//         {
-//             name: 'Last Updated',
-//             selector: row => row.LastUpdated.slice(0, 10),
-//             sortable: true,
-//             style: {
-//                 color: 'rgba(0,0,0,.54)',
-//             },
-//         },
-//         {
-//             cell: row => <InvenotoryMenu deleteProductStorage={deleteProductStorage} editInventory={setOpenInventoryUpdateModal} row={row} />,
-//             allowOverFlow: true,
-//             button: true,
-//             width: '56px',
-//         },
-//     ];
-
-//     return (
-//         <>
-//             <div className="w-full h-full p-4 relative">
-//                 <h2 className="text-3xl font-bold mb-6">Manage Inventory</h2>
-
-//                 <div className="my-7">
-//                     <div className="flex justify-items-end">
-//                         <button
-//                             className="bg-blue-400 px-8 py-2 rounded text-black font-medium"
-//                             onClick={() => setProductStorageAddModal(() => true)}
-//                         >
-//                             Add To Inventory
-//                         </button>
-//                     </div>
-//                 </div>
-//                 <DataTable
-//                     columns={columns}
-//                     data={productStorage}
-//                     customStyles={customStyles}
-//                     highlightOnHover
-//                     pointerOnHover
-//                     pagination
-//                     onRowClicked={(row) => setOpenModal(() => row)}
-//                 />
-//             </div>
-
-//             {openModal ? (
-//                 <>
-//                     <ProductInfoModal setOpenModal={setOpenModal} inevntoryInfo={openModal} />
-//                 </>
-//             ) : null}
-
-//             {openInventoryUpdateModal ? (
-//                 <>
-//                     <InventoryEditModel
-//                         setOpenModal={setOpenInventoryUpdateModal}
-//                         inventoryInfo={openInventoryUpdateModal}
-//                         editInventory={editInventory}
-//                     />
-//                 </>
-//             ) : null}
-
-//             {openProductStorageModal ? (
-//                 <>
-//                     <StorageAddModal setOpenModal={setProductStorageAddModal} addProductStorage={addProductStorage} />
-//                 </>
-//             ) : null}
-//         </>
-//     )
-// }
-
-// export default ManageInventory
 
 import DataTable from "react-data-table-component";
 import React, { useEffect, useState } from "react";
@@ -349,7 +45,7 @@ function ManageInventory(props) {
 
             if (productStorages.status === 200) {
                 setProductStorage(() => productStorages.data);
-                
+
                 // Extract unique location IDs
                 // const uniqueLocations = [...new Set(productStorages.data.map(item => item.LocationID))];
                 // setLocations(["All", ...uniqueLocations]);
@@ -371,7 +67,7 @@ function ManageInventory(props) {
             setIsLoading(false);
             if (error.status === 404) {
                 console.log(error.response.data.message);
-            } 
+            }
             // else if (error.status === 500 && error.response?.data?.error.includes("Please authenticate")) {
             //     sessionStorage.clear();
             //     history.push('/auth/login');
@@ -388,7 +84,7 @@ function ManageInventory(props) {
 
             const api = createAxiosInstance()
             const res = await api.post('productstorage', StorageData)
-            
+
             if (res.status === 200) {
                 if (res.data.newProductStorage.message === 'New inventory record created successfully') {
                     Swal.fire({
@@ -440,7 +136,7 @@ function ManageInventory(props) {
 
                 const api = createAxiosInstance()
                 const response = await api.delete(`productstorage/${productStorageRow.ProductID}`)
-                
+
                 if (response.data.deletedProductStorage.status === 'success') {
                     Swal.fire(
                         'Deleted!',
@@ -462,7 +158,7 @@ function ManageInventory(props) {
 
     async function editInventory(inventoryData) {
         const date = new Date().toISOString();
-        
+
         const updatedData = {
             Quantity: inventoryData.Quantity,
             LastUpdated: date,
@@ -477,7 +173,7 @@ function ManageInventory(props) {
 
             const api = createAxiosInstance()
             const res = await api.put(`productstorage/${inventoryData.ProductID}/${inventoryData.LocationID}`, updatedData)
-            
+
             if (res.status === 200) {
                 setOpenInventoryUpdateModal(() => false);
                 Swal.fire({
@@ -505,13 +201,12 @@ function ManageInventory(props) {
 
     // Filter inventory based on search query and location filter
     const filteredInventory = productStorage.filter(item => {
-        const matchesSearch = 
-            item.ProductID.toString().includes(searchQuery) || 
-            item.LocationID.toString().includes(searchQuery) ||
-            item.Quantity.toString().includes(searchQuery);
-        
+        const matchesSearch =
+            item.ProductID.toString().includes(searchQuery) ||
+            item.product.Name.toLowerCase().includes(searchQuery.toLowerCase());  // search by product name too
+
         const matchesLocation = locationFilter === "All Locations" || item.LocationID.toString() === locationFilter;
-        
+
         return matchesSearch && matchesLocation;
     });
 
@@ -572,7 +267,7 @@ function ManageInventory(props) {
 
     const QuantityBadge = ({ quantity }) => {
         let badgeClass = "px-3 py-1 rounded-full text-xs font-medium ";
-        
+
         if (quantity > 50) {
             badgeClass += "bg-green-100 text-green-800";
         } else if (quantity > 10) {
@@ -582,15 +277,15 @@ function ManageInventory(props) {
         } else {
             badgeClass += "bg-gray-100 text-gray-800";
         }
-        
+
         return <span className={badgeClass}>{quantity}</span>;
     };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -612,7 +307,7 @@ function ManageInventory(props) {
             name: "Product Name",
             selector: row => row.product.Name,
             sortable: true,
-            width: "120px",
+            width: "170px",
             style: {
                 fontWeight: 600,
                 color: "#1f2937",
@@ -646,7 +341,9 @@ function ManageInventory(props) {
         },
     ];
 
-    const totalQuantity = productStorage.reduce((sum, item) => sum + item.Quantity, 0);
+    const totalQuantity = Number(
+  productStorage.reduce((sum, item) => sum + Number(item.Quantity), 0)
+);
     const lowStockItems = productStorage.filter(item => item.Quantity > 0 && item.Quantity <= 10).length;
     const outOfStockItems = productStorage.filter(item => item.Quantity === 0).length;
 
@@ -674,7 +371,7 @@ function ManageInventory(props) {
                     </div>
 
                     {/* Search and Filter Bar */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div className="bg-white p-4 rounded-lg shadow-sm mb-">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-grow">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -687,7 +384,7 @@ function ManageInventory(props) {
                                     name="search"
                                     id="search"
                                     className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-                                    placeholder="Search by product ID, location, or quantity"
+                                    placeholder="Search by Product ID, Product Name or Location"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -713,6 +410,69 @@ function ManageInventory(props) {
                                     </svg>
                                     Refresh
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+
+                        {/* Inventory Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-">
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
+                                        <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Total Records</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{productStorage.length}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
+                                        <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Total Quantity</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{totalQuantity}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
+                                        <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Low Stock</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{lowStockItems}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <div className="flex items-center">
+                                    <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
+                                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-5">
+                                        <p className="text-sm font-medium text-gray-500">Out of Stock</p>
+                                        <h3 className="mt-1 text-xl font-semibold text-gray-900">{outOfStockItems}</h3>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -747,64 +507,7 @@ function ManageInventory(props) {
                         />
                     </div>
 
-                    {/* Inventory Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-blue-100">
-                                    <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Total Records</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{productStorage.length}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-green-100">
-                                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Total Quantity</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{totalQuantity}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-yellow-100">
-                                    <svg className="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Low Stock</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{lowStockItems}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="flex items-center">
-                                <div className="flex-shrink-0 p-3 rounded-md bg-red-100">
-                                    <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">Out of Stock</p>
-                                    <h3 className="mt-1 text-xl font-semibold text-gray-900">{outOfStockItems}</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

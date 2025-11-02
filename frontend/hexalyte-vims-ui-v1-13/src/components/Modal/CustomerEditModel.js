@@ -90,11 +90,11 @@ function CustomerEditModal({ setOpenModal, customerInfo, editCustomer }) {
             validationErrors.Phone = "Phone number must contain only numbers";
         }
         
-        if (!customerData.Email.trim()) {
-            validationErrors.Email = "Email is required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.Email)) {
-            validationErrors.Email = "Please enter a valid email address";
-        }
+        // if (!customerData.Email.trim()) {
+        //     validationErrors.Email = "Email is required";
+        // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.Email)) {
+        //     validationErrors.Email = "Please enter a valid email address";
+        // }
         
         if (!customerData.Street.trim()) {
             validationErrors.Street = "Street is required";
@@ -108,13 +108,13 @@ function CustomerEditModal({ setOpenModal, customerInfo, editCustomer }) {
         //     validationErrors.State = "State is required";
         // }
         
-        if (!customerData.PostalCode.trim()) {
-            validationErrors.PostalCode = "Postal Code is required";
-        }
+        // if (!customerData.PostalCode.trim()) {
+        //     validationErrors.PostalCode = "Postal Code is required";
+        // }
         
-        if (!customerData.Country.trim()) {
-            validationErrors.Country = "Country is required";
-        }
+        // if (!customerData.Country.trim()) {
+        //     validationErrors.Country = "Country is required";
+        // }
         
         setErrors(validationErrors);
         return Object.keys(validationErrors).length === 0;
