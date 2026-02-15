@@ -16,4 +16,8 @@ router
   .put(auth(), customerController.updateCustomerById)
   .delete(auth(), validate(customerValidation.deleteCustomerById),customerController.deleteCustomerById);
 
+router
+  .route("/:id/orders")
+  .get(auth(), customerController.getCustomerOrderHistory);
+
 module.exports = router;

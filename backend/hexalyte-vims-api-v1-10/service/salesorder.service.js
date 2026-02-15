@@ -394,8 +394,8 @@ const getPaymentStatusSummary = async () => {
     WHERE isActive = 1;
     `;
 
-    const results = await sequelize.query(query, {
-      type: sequelize.QueryTypes.SELECT,
+    const results = await db.sequelize.query(query, {
+      type: db.sequelize.QueryTypes.SELECT,
       raw: true,
     });
 

@@ -65,10 +65,16 @@ const deleteCustomerById = catchAsync(async (req, res) => {
   return res.status(httpStatus.OK).send({ deletedCustomer });
 });
 
+const getCustomerOrderHistory = catchAsync(async (req, res) => {
+  const orderHistory = await customerServices.getCustomerOrderHistory(req.params.id);
+  return res.status(httpStatus.OK).send({ orderHistory });
+});
+
 module.exports = {
   addCustomer,
   getAllCustomers,
   getCustomerById,
   updateCustomerById,
   deleteCustomerById,
+  getCustomerOrderHistory,
 };

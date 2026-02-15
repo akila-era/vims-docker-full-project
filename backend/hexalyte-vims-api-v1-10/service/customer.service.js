@@ -1,6 +1,9 @@
 const db = require("../models");
 const Customer = db.customer;
 const CustomerAddress = db.customeraddress;
+const Salesorder = db.salesorder;
+const SalesorderDetail = db.salesorderdetail;
+const Product = db.product;
 
 // Add New Customer
 const addNewCustomer = async (params) => {
@@ -89,10 +92,33 @@ const deleteCustomerById = async (cusId) => {
 
 };
 
+// Get Customer Order History
+const getCustomerOrderHistory = async (customerId) => {
+  const orders = await Salesorder.findAll({
+    where: { 
+      CustomerID: customerId, 
+      isActive: 1 
+    },
+    include: [{
+      model: Product,
+      through: { 
+        model: SalesorderDetail, 
+        attributes: ['Quantity', 'Price'] 
+      },
+      attributes: ['ProductID', 'Name', 'Description', 'SellingPrice']
+    }],
+    order: [['OrderDate', 'DESC']],
+    attributes: ['OrderID', 'OrderDate', 'TotalAmount', 'Status', 'Discount', 'PaymentStatus']
+  });
+  
+  return orders;
+};
+
 module.exports = {
   addNewCustomer,
   getAllCustomers,
   getCustomerById,
   updateCustomerById,
   deleteCustomerById,
+  getCustomerOrderHistory,
 };
