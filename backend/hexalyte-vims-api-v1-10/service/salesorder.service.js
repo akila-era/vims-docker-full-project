@@ -357,8 +357,8 @@ const getSalesReport = async ({ startDate, endDate }) => {
           so.Status,
           so.PaymentStatus,
           so.Discount,
-          c.CustomerName,
-          c.PhoneNumber,
+          c.Name AS CustomerName,
+          c.Phone AS PhoneNumber,
           COUNT(DISTINCT sod.ProductID) AS ProductCount,
           SUM(sod.Quantity) AS TotalItems
         FROM salesorders so
@@ -366,7 +366,7 @@ const getSalesReport = async ({ startDate, endDate }) => {
         LEFT JOIN salesorderdetails sod ON so.OrderID = sod.OrderID
         WHERE so.OrderDate BETWEEN :startDate AND :endDate
         GROUP BY so.OrderID, so.OrderDate, so.TotalAmount, so.Status, 
-                 so.PaymentStatus, so.Discount, c.CustomerName, c.PhoneNumber
+                 so.PaymentStatus, so.Discount, c.Name, c.Phone
         ORDER BY so.OrderDate DESC
       `,
       {
