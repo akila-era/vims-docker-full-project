@@ -2,7 +2,6 @@ const db = require("../models");
 const Customer = db.customer;
 const CustomerAddress = db.customeraddress;
 const Salesorder = db.salesorder;
-const SalesorderDetail = db.salesorderdetail;
 const Product = db.product;
 
 // Add New Customer
@@ -102,8 +101,7 @@ const getCustomerOrderHistory = async (customerId) => {
     include: [{
       model: Product,
       through: { 
-        model: SalesorderDetail, 
-        attributes: ['Quantity', 'Price'] 
+        attributes: ['Quantity', 'UnitPrice'] 
       },
       attributes: ['ProductID', 'Name', 'Description', 'SellingPrice']
     }],
