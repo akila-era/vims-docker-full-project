@@ -28,9 +28,31 @@ app.use(morgan("dev"));
 app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({ extended:true }))
+
+// CORS Configuration - Allow frontend to access API
+const allowedOrigins = [
+    process.env.CORS_ORIGIN || 'https://vims.hexalyte.com',
+    'http://localhost:3000',
+    'http://localhost:3002'
+];
+
 app.use(cors({
-     origin: 'https://vims.hexalyte.com',
-    credentials: true
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400 // 24 hours
 }));
 
 // Your regular express app setup
