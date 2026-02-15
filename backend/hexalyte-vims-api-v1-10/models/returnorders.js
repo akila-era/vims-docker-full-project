@@ -79,11 +79,7 @@ module.exports = (sequelize, DataTypes) => {
 
     LocationID: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'warehouselocation',
-        key: 'LocationID'
-      }
+      allowNull: true
     }
 
   }, {
