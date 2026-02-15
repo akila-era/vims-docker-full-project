@@ -101,6 +101,7 @@ const deletesalesorder = catchAsync(async (req, res) => {
 
 const getsalesreport = catchAsync(async (req, res)=>{
    const { startDate, endDate } = req.query;
+    console.log('Sales Report Request - startDate:', startDate, 'endDate:', endDate);
     const report = await Salesorderservices.getSalesReport({startDate,endDate});
     
     // Return 200 even if no data found (empty arrays instead of 404)
