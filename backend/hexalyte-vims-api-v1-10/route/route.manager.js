@@ -19,6 +19,7 @@ const discountsRoute = require('./v1/discount.route')
 const onboardRoute = require('./v1/onboard.route')
 const transferRoutes = require('./v1/transfer.route')
 const returnOrderRoutes = require('./v1/returnorder.route')
+const dashboardRoute = require('./v1/dashboard.route')
 
 const routeManager = (app) => {
     // API V1 Routes
@@ -43,6 +44,7 @@ const routeManager = (app) => {
     app.use('/v1/onboard', onboardRoute)
     app.use('/v1/transfer', transferRoutes)
     app.use('/v1/return', returnOrderRoutes)
+    app.use('/v1/dashboard', dashboardRoute)
 }
 
 module.exports = routeManager;
