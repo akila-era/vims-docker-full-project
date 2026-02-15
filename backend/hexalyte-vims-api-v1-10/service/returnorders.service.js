@@ -1178,10 +1178,11 @@ const getReturnOrderReport = async ({ startDate, endDate }) => {
             SELECT 
                 COUNT(DISTINCT ro.ReturnID) AS TotalReturns,
                 COUNT(DISTINCT roi.ProductID) AS UniqueProductsReturned,
-                SUM(roi.Quantity) AS TotalUnitsReturned,
-                SUM(roi.Quantity * roi.UnitPrice) AS TotalReturnValue
+                COALESCE(SUM(roi.Quantity), 0) AS TotalUnitsReturned,
+                COALESCE(SUM(roi.Quantity * p.SellingPrice), 0) AS TotalReturnValue
             FROM returnorders ro
             LEFT JOIN returnorderitems roi ON ro.ReturnID = roi.ReturnID
+            LEFT JOIN products p ON roi.ProductID = p.ProductID
             WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
             `,
             {
@@ -1197,7 +1198,7 @@ const getReturnOrderReport = async ({ startDate, endDate }) => {
                 p.ProductID,
                 p.Name AS ProductName,
                 SUM(roi.Quantity) AS TotalReturned,
-                SUM(roi.Quantity * roi.UnitPrice) AS ReturnValue,
+                SUM(roi.Quantity * p.SellingPrice) AS ReturnValue,
                 COUNT(DISTINCT ro.ReturnID) AS ReturnCount
             FROM returnorderitems roi
             JOIN returnorders ro ON roi.ReturnID = ro.ReturnID
@@ -1238,10 +1239,11 @@ const getReturnOrderReport = async ({ startDate, endDate }) => {
                 MONTH(ro.ReturnDate) AS Month,
                 YEAR(ro.ReturnDate) AS Year,
                 COUNT(DISTINCT ro.ReturnID) AS ReturnCount,
-                SUM(roi.Quantity) AS UnitsReturned,
-                SUM(roi.Quantity * roi.UnitPrice) AS ReturnValue
+                COALESCE(SUM(roi.Quantity), 0) AS UnitsReturned,
+                COALESCE(SUM(roi.Quantity * p.SellingPrice), 0) AS ReturnValue
             FROM returnorders ro
             LEFT JOIN returnorderitems roi ON ro.ReturnID = roi.ReturnID
+            LEFT JOIN products p ON roi.ProductID = p.ProductID
             WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
             GROUP BY YEAR(ro.ReturnDate), MONTH(ro.ReturnDate)
             ORDER BY Year, Month
