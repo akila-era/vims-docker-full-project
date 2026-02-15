@@ -76,7 +76,7 @@ app.use(cors({
 //     res.end();
 //   }).listen(80);
 
-db.sequelize.sync({ alter: true })
+db.sequelize.sync()
     .then(() => {
         console.log("sync db.");
     })
