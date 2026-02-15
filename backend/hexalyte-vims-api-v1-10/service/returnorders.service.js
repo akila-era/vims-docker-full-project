@@ -1061,7 +1061,7 @@ const getReturnOrderById = async (returnId) => {
                     include: [{ model: Product }]
                 },
                 { model: SalesOrders },
-                { model: User, attributes: ['id', 'name', 'email'] }
+                { model: User, attributes: ['id', 'username', 'firstname', 'lastname', 'email'] }
             ]
         });
 
@@ -1154,7 +1154,7 @@ const getReturnOrdersByDateRange = async ({ startDate, endDate }) => {
                     include: [{ model: Product, attributes: ['ProductID', 'Name', 'BuyingPrice'] }]
                 },
                 { model: SalesOrders, attributes: ['OrderID', 'TotalAmount', 'CustomerID'] },
-                { model: User, attributes: ['id', 'name'] }
+                { model: User, attributes: ['id', 'username', 'firstname', 'lastname'] }
             ],
             order: [['ReturnDate', 'DESC']]
         });
@@ -1281,7 +1281,7 @@ const getReturnsBySalesOrderId = async (salesOrderId) => {
                     model: ReturnOrderItems,
                     include: [{ model: Product }]
                 },
-                { model: User, attributes: ['id', 'name'] }
+                { model: User, attributes: ['id', 'username', 'firstname', 'lastname'] }
             ],
             order: [['ReturnDate', 'DESC']]
         });
