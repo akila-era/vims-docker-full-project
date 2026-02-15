@@ -308,8 +308,9 @@ const deletesalesorderById = async (orderId) => {
 };
 
 const getSalesReport = async ({ startDate, endDate }) => {
-  const results = await db.sequelize.query(
-    `
+  try {
+    const results = await db.sequelize.query(
+      `
           SELECT 
             Name AS ProductName,
             SUM(Quantity) AS UnitsSold,
@@ -333,48 +334,53 @@ const getSalesReport = async ({ startDate, endDate }) => {
         ) AS OrderTotals
         GROUP BY Name;
         `,
-    {
+      {
+        replacements: { startDate, endDate },
+        type: db.sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    const discounts = await db.sequelize.query(`
+        SELECT SUM(Discount) AS TotalDiscount FROM salesorders WHERE OrderDate BETWEEN :startDate AND :endDate
+      `, {
       replacements: { startDate, endDate },
-      type: db.sequelize.QueryTypes.SELECT,
-    }
-  );
+      type: db.sequelize.QueryTypes.SELECT
+    })
 
-  const discounts = await db.sequelize.query(`
-      SELECT SUM(Discount) AS TotalDiscount FROM salesorders WHERE OrderDate BETWEEN :startDate AND :endDate
-    `, {
-    replacements: { startDate, endDate },
-    type: db.sequelize.QueryTypes.SELECT
-  })
+    // Get order-level data with customer names
+    const orders = await db.sequelize.query(
+      `
+        SELECT 
+          so.OrderID,
+          so.OrderDate,
+          so.TotalAmount,
+          so.Status,
+          so.PaymentStatus,
+          so.Discount,
+          c.CustomerName,
+          c.PhoneNumber,
+          COUNT(DISTINCT sod.ProductID) AS ProductCount,
+          SUM(sod.Quantity) AS TotalItems
+        FROM salesorders so
+        LEFT JOIN customers c ON so.CustomerID = c.CustomerID
+        LEFT JOIN salesorderdetails sod ON so.OrderID = sod.OrderID
+        WHERE so.OrderDate BETWEEN :startDate AND :endDate
+        GROUP BY so.OrderID, so.OrderDate, so.TotalAmount, so.Status, 
+                 so.PaymentStatus, so.Discount, c.CustomerName, c.PhoneNumber
+        ORDER BY so.OrderDate DESC
+      `,
+      {
+        replacements: { startDate, endDate },
+        type: db.sequelize.QueryTypes.SELECT,
+      }
+    );
 
-  // Get order-level data with customer names
-  const orders = await db.sequelize.query(
-    `
-      SELECT 
-        so.OrderID,
-        so.OrderDate,
-        so.TotalAmount,
-        so.Status,
-        so.PaymentStatus,
-        so.Discount,
-        c.CustomerName,
-        c.PhoneNumber,
-        COUNT(DISTINCT sod.ProductID) AS ProductCount,
-        SUM(sod.Quantity) AS TotalItems
-      FROM salesorders so
-      LEFT JOIN customers c ON so.CustomerID = c.CustomerID
-      LEFT JOIN salesorderdetails sod ON so.OrderID = sod.OrderID
-      WHERE so.OrderDate BETWEEN :startDate AND :endDate
-      GROUP BY so.OrderID, so.OrderDate, so.TotalAmount, so.Status, 
-               so.PaymentStatus, so.Discount, c.CustomerName, c.PhoneNumber
-      ORDER BY so.OrderDate DESC
-    `,
-    {
-      replacements: { startDate, endDate },
-      type: db.sequelize.QueryTypes.SELECT,
-    }
-  );
-
-  return { results, discounts, orders };
+    return { results, discounts, orders };
+  } catch (error) {
+    console.error('Sales Report Error:', error.message);
+    console.error('Error details:', error);
+    throw error;
+  }
 };
 
 const getPaymentStatusSummary = async () => {
