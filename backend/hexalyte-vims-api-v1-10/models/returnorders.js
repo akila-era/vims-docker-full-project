@@ -64,6 +64,26 @@ module.exports = (sequelize, DataTypes) => {
         model: 'users',
         key: 'id'
       }
+    },
+
+    TotalAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+
+    Status: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'PENDING'
+    },
+
+    LocationID: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'warehouselocation',
+        key: 'LocationID'
+      }
     }
 
   }, {

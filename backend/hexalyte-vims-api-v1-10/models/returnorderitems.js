@@ -47,6 +47,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER
         },
 
+        UnitPrice: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true
+        },
+
         Note: {
             type: DataTypes.TEXT
         }
