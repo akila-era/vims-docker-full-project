@@ -118,6 +118,7 @@ const getsalesreport = catchAsync(async (req, res)=>{
         status: "success",
         message: "Sales report generated successfully",
         productSalesData: report.results,
+        orders: report.orders || [],
         totalDiscounts: report.discounts
     })
 });
