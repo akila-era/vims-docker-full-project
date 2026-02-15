@@ -1046,7 +1046,260 @@ const getReturnSummary = async (salesOrderId) => {
     }
 };
 
-module.exports = { createReturnSalesOrder, getAllReturnOrders }
+// ==================== NEW FUNCTIONS ====================
+
+/**
+ * Get Return Order by ID
+ * Returns single return order with items and product details
+ */
+const getReturnOrderById = async (returnId) => {
+    try {
+        const returnOrder = await ReturnOrders.findByPk(returnId, {
+            include: [
+                {
+                    model: ReturnOrderItems,
+                    include: [{ model: Product }]
+                },
+                { model: SalesOrders },
+                { model: User, attributes: ['id', 'name', 'email'] }
+            ]
+        });
+
+        if (!returnOrder) {
+            return { status: 'error', message: 'Return order not found' };
+        }
+
+        return { status: 'success', data: returnOrder };
+    } catch (error) {
+        console.error('Error fetching return order:', error);
+        return { status: 'error', message: error.message };
+    }
+};
+
+/**
+ * Delete Return Order by ID
+ * Reverses inventory changes and removes return order
+ */
+const deleteReturnOrder = async (returnId) => {
+    const transaction = await db.sequelize.transaction();
+    
+    try {
+        const returnOrder = await ReturnOrders.findByPk(returnId, {
+            include: [{ model: ReturnOrderItems }]
+        });
+
+        if (!returnOrder) {
+            return { status: 'error', message: 'Return order not found' };
+        }
+
+        // Reverse inventory changes for returned items
+        for (const item of returnOrder.returnorderitems || []) {
+            // Decrease product storage (reverse the return)
+            await ProductStorage.decrement('Quantity', {
+                by: item.Quantity,
+                where: { ProductID: item.ProductID, LocationID: returnOrder.LocationID },
+                transaction
+            });
+
+            // Decrease product quantity
+            await Product.decrement('QuantityInStock', {
+                by: item.Quantity,
+                where: { ProductID: item.ProductID },
+                transaction
+            });
+        }
+
+        // Delete inventory transactions related to this return
+        await InventoryTransaction.destroy({
+            where: { ReferenceID: returnId, TransactionType: 'RETURN' },
+            transaction
+        });
+
+        // Delete return order items
+        await ReturnOrderItems.destroy({
+            where: { ReturnID: returnId },
+            transaction
+        });
+
+        // Delete return order
+        await ReturnOrders.destroy({
+            where: { ReturnID: returnId },
+            transaction
+        });
+
+        await transaction.commit();
+
+        return { status: 'success', message: 'Return order deleted successfully' };
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error deleting return order:', error);
+        return { status: 'error', message: error.message };
+    }
+};
+
+/**
+ * Get Return Orders by Date Range
+ */
+const getReturnOrdersByDateRange = async ({ startDate, endDate }) => {
+    try {
+        const returnOrders = await ReturnOrders.findAll({
+            where: {
+                ReturnDate: {
+                    [db.Sequelize.Op.between]: [startDate, endDate]
+                }
+            },
+            include: [
+                {
+                    model: ReturnOrderItems,
+                    include: [{ model: Product, attributes: ['ProductID', 'Name', 'BuyingPrice'] }]
+                },
+                { model: SalesOrders, attributes: ['OrderID', 'TotalAmount', 'CustomerID'] },
+                { model: User, attributes: ['id', 'name'] }
+            ],
+            order: [['ReturnDate', 'DESC']]
+        });
+
+        return { status: 'success', data: returnOrders };
+    } catch (error) {
+        console.error('Error fetching return orders by date:', error);
+        return { status: 'error', message: error.message };
+    }
+};
+
+/**
+ * Get Return Order Report
+ * Returns: Summary stats, product-wise returns, reason analysis
+ */
+const getReturnOrderReport = async ({ startDate, endDate }) => {
+    try {
+        // Get summary statistics
+        const summaryQuery = await db.sequelize.query(
+            `
+            SELECT 
+                COUNT(DISTINCT ro.ReturnID) AS TotalReturns,
+                COUNT(DISTINCT roi.ProductID) AS UniqueProductsReturned,
+                SUM(roi.Quantity) AS TotalUnitsReturned,
+                SUM(roi.Quantity * roi.UnitPrice) AS TotalReturnValue
+            FROM returnorders ro
+            LEFT JOIN returnorderitems roi ON ro.ReturnID = roi.ReturnID
+            WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
+            `,
+            {
+                replacements: { startDate, endDate },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Get product-wise return data
+        const productReturns = await db.sequelize.query(
+            `
+            SELECT 
+                p.ProductID,
+                p.Name AS ProductName,
+                SUM(roi.Quantity) AS TotalReturned,
+                SUM(roi.Quantity * roi.UnitPrice) AS ReturnValue,
+                COUNT(DISTINCT ro.ReturnID) AS ReturnCount
+            FROM returnorderitems roi
+            JOIN returnorders ro ON roi.ReturnID = ro.ReturnID
+            JOIN products p ON roi.ProductID = p.ProductID
+            WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
+            GROUP BY p.ProductID, p.Name
+            ORDER BY TotalReturned DESC
+            `,
+            {
+                replacements: { startDate, endDate },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Get reason analysis
+        const reasonAnalysis = await db.sequelize.query(
+            `
+            SELECT 
+                Reason,
+                COUNT(*) AS ReturnCount,
+                SUM(roi.Quantity) AS TotalUnits
+            FROM returnorders ro
+            LEFT JOIN returnorderitems roi ON ro.ReturnID = roi.ReturnID
+            WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
+            GROUP BY Reason
+            ORDER BY ReturnCount DESC
+            `,
+            {
+                replacements: { startDate, endDate },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Get monthly trends
+        const monthlyTrends = await db.sequelize.query(
+            `
+            SELECT 
+                MONTH(ro.ReturnDate) AS Month,
+                YEAR(ro.ReturnDate) AS Year,
+                COUNT(DISTINCT ro.ReturnID) AS ReturnCount,
+                SUM(roi.Quantity) AS UnitsReturned,
+                SUM(roi.Quantity * roi.UnitPrice) AS ReturnValue
+            FROM returnorders ro
+            LEFT JOIN returnorderitems roi ON ro.ReturnID = roi.ReturnID
+            WHERE ro.ReturnDate BETWEEN :startDate AND :endDate
+            GROUP BY YEAR(ro.ReturnDate), MONTH(ro.ReturnDate)
+            ORDER BY Year, Month
+            `,
+            {
+                replacements: { startDate, endDate },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        return {
+            status: 'success',
+            data: {
+                summary: summaryQuery[0] || {},
+                productReturns,
+                reasonAnalysis,
+                monthlyTrends
+            }
+        };
+    } catch (error) {
+        console.error('Error generating return report:', error);
+        return { status: 'error', message: error.message };
+    }
+};
+
+/**
+ * Get Return Orders by Sales Order ID
+ */
+const getReturnsBySalesOrderId = async (salesOrderId) => {
+    try {
+        const returns = await ReturnOrders.findAll({
+            where: { SalesOrderID: salesOrderId },
+            include: [
+                {
+                    model: ReturnOrderItems,
+                    include: [{ model: Product }]
+                },
+                { model: User, attributes: ['id', 'name'] }
+            ],
+            order: [['ReturnDate', 'DESC']]
+        });
+
+        return { status: 'success', data: returns };
+    } catch (error) {
+        console.error('Error fetching returns for sales order:', error);
+        return { status: 'error', message: error.message };
+    }
+};
+
+module.exports = { 
+    createReturnSalesOrder, 
+    getAllReturnOrders,
+    getReturnOrderById,
+    deleteReturnOrder,
+    getReturnOrdersByDateRange,
+    getReturnOrderReport,
+    getReturnsBySalesOrderId
+}
 
 /* {
     "newReturnSalesOrder": {

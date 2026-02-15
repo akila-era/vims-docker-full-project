@@ -15,7 +15,7 @@ const createsalesorder = {
     OrderItems: joi.array().items(
       joi.object({
         ProductID: joi.number().integer().required(),
-        Quantity: joi.any(),
+        Quantity: joi.number().precision(2).min(0).required(),
         UnitPrice: joi.number().precision(2).min(0).required(),
         ProductName: joi.string(),
         TotalPrice: joi.number()
@@ -44,7 +44,17 @@ const updatesalesorder = {
     Discount: joi.number().precision(2).min(0),
     LocationID: joi.number().integer().required(),
     DiscountID: joi.number().integer().allow(null),
-    PaymentStatus: joi.string().required()
+    PaymentStatus: joi.string().required(),
+    TransactionType: joi.string().required(),
+    OrderItems: joi.array().items(
+      joi.object({
+        ProductID: joi.number().integer().required(),
+        Quantity: joi.number().precision(2).min(0).required(),
+        UnitPrice: joi.number().precision(2).min(0).required(),
+        ProductName: joi.string(),
+        TotalPrice: joi.number()
+      })
+    ).min(1).required()
   }),
 };
 

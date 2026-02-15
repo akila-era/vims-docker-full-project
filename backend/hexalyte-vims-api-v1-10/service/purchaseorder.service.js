@@ -94,10 +94,138 @@ const deletePurchaseOrderByID = async (poID) => {
 
 }
 
+// ==================== REPORT FUNCTIONS ====================
+
+/**
+ * Get Purchase Order Report by Date Range
+ * Returns: Product totals, order summaries, supplier analytics
+ */
+const getPurchaseOrderReport = async ({ startDate, endDate }) => {
+    const results = await db.sequelize.query(
+        `
+        SELECT 
+            p.Name AS ProductName,
+            SUM(pod.Quantity) AS UnitsPurchased,
+            SUM(pod.Quantity * pod.UnitPrice) AS TotalPurchaseCost,
+            AVG(pod.UnitPrice) AS AvgUnitPrice
+        FROM purchaseorderdetails pod
+        JOIN products p ON pod.ProductID = p.ProductID
+        JOIN purchaseorders po ON pod.OrderID = po.OrderID
+        WHERE po.OrderDate BETWEEN :startDate AND :endDate
+        GROUP BY p.Name
+        ORDER BY TotalPurchaseCost DESC
+        `,
+        {
+            replacements: { startDate, endDate },
+            type: db.sequelize.QueryTypes.SELECT
+        }
+    );
+
+    const orderSummary = await db.sequelize.query(
+        `
+        SELECT 
+            po.OrderID,
+            po.OrderDate,
+            po.TotalAmount,
+            po.Status,
+            po.Discount,
+            po.NetAmount,
+            COUNT(DISTINCT pod.ProductID) AS ProductCount,
+            SUM(pod.Quantity) AS TotalItems
+        FROM purchaseorders po
+        LEFT JOIN purchaseorderdetails pod ON po.OrderID = pod.OrderID
+        WHERE po.OrderDate BETWEEN :startDate AND :endDate
+        GROUP BY po.OrderID, po.OrderDate, po.TotalAmount, po.Status, po.Discount, po.NetAmount
+        ORDER BY po.OrderDate DESC
+        `,
+        {
+            replacements: { startDate, endDate },
+            type: db.sequelize.QueryTypes.SELECT
+        }
+    );
+
+    const totals = await db.sequelize.query(
+        `
+        SELECT 
+            COUNT(*) AS TotalOrders,
+            SUM(TotalAmount) AS GrossTotal,
+            SUM(Discount) AS TotalDiscounts,
+            SUM(NetAmount) AS NetTotal
+        FROM purchaseorders
+        WHERE OrderDate BETWEEN :startDate AND :endDate
+        `,
+        {
+            replacements: { startDate, endDate },
+            type: db.sequelize.QueryTypes.SELECT
+        }
+    );
+
+    return {
+        productData: results,
+        orders: orderSummary,
+        summary: totals[0] || { TotalOrders: 0, GrossTotal: 0, TotalDiscounts: 0, NetTotal: 0 }
+    };
+};
+
+/**
+ * Get Purchase Order Status Summary
+ * Returns: Count and totals by status (Pending, Approved, Completed, etc.)
+ */
+const getPurchaseOrderStatusSummary = async () => {
+    const results = await db.sequelize.query(
+        `
+        SELECT 
+            Status,
+            COUNT(*) AS OrderCount,
+            SUM(TotalAmount) AS TotalAmount,
+            SUM(NetAmount) AS NetAmount
+        FROM purchaseorders
+        GROUP BY Status
+        ORDER BY OrderCount DESC
+        `,
+        {
+            type: db.sequelize.QueryTypes.SELECT
+        }
+    );
+
+    return results;
+};
+
+/**
+ * Get Monthly Purchase Trends
+ * Returns: Monthly totals for trend analysis
+ */
+const getMonthlyPurchaseTrends = async (year) => {
+    const results = await db.sequelize.query(
+        `
+        SELECT 
+            MONTH(OrderDate) AS Month,
+            YEAR(OrderDate) AS Year,
+            COUNT(*) AS OrderCount,
+            SUM(TotalAmount) AS TotalAmount,
+            SUM(NetAmount) AS NetAmount
+        FROM purchaseorders
+        WHERE YEAR(OrderDate) = :year
+        GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+        ORDER BY Month ASC
+        `,
+        {
+            replacements: { year },
+            type: db.sequelize.QueryTypes.SELECT
+        }
+    );
+
+    return results;
+};
+
 module.exports = {
     getAllPurchaseOrders,
     addNewPurchaseOrder,
     getPurchaseOrderByID,
     updatePurchaseOrderByID,
-    deletePurchaseOrderByID
+    deletePurchaseOrderByID,
+    // Report functions
+    getPurchaseOrderReport,
+    getPurchaseOrderStatusSummary,
+    getMonthlyPurchaseTrends
 }

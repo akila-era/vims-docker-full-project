@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
     OrderDate: DataTypes.DATE,
     TotalAmount: DataTypes.DECIMAL(10, 2),
     Status: DataTypes.STRING,
-    Discount: DataTypes.DECIMAL,
+    Discount: DataTypes.DECIMAL(10, 2),
     PaymentStatus: DataTypes.ENUM('UNPAID', 'PAID'),
     DiscountID: {
       type: DataTypes.INTEGER,

@@ -102,10 +102,15 @@ const deletesalesorder = catchAsync(async (req, res) => {
 const getsalesreport = catchAsync(async (req, res)=>{
    const { startDate, endDate } = req.query;
     const report = await Salesorderservices.getSalesReport({startDate,endDate});
+    
+    // Return 200 even if no data found (empty arrays instead of 404)
     if(!report || report.results.length === 0){
-        res.status(httpStatus.NOT_FOUND).send({
-            status: "failure",
-            message: "No sales report data found"
+        res.status(httpStatus.OK).send({
+            status: "success",
+            message: "No sales data found for the selected date range",
+            productSalesData: [],
+            orders: [],
+            totalDiscounts: 0
         });
         return;
     }
@@ -132,6 +137,46 @@ const getPaymentStatsummery = catchAsync(async (req,res)=>{
     });
 })
 
+/**
+ * Get Monthly Sales Trends
+ * Query param: year (optional, defaults to current year)
+ */
+const getMonthlySalesTrends = catchAsync(async (req, res) => {
+    const year = req.query.year || new Date().getFullYear();
+
+    const trends = await Salesorderservices.getMonthlySalesTrends(year);
+
+    return res.status(httpStatus.OK).send({
+        status: "success",
+        message: `Monthly sales trends for ${year}`,
+        year: parseInt(year),
+        monthlyData: trends
+    });
+});
+
+/**
+ * Get Sales by Customer Report
+ * Query params: startDate, endDate (YYYY-MM-DD)
+ */
+const getSalesByCustomerReport = catchAsync(async (req, res) => {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        return res.status(httpStatus.BAD_REQUEST).send({
+            status: 'fail',
+            message: 'startDate and endDate query parameters are required'
+        });
+    }
+
+    const report = await Salesorderservices.getSalesByCustomerReport({ startDate, endDate });
+
+    return res.status(httpStatus.OK).send({
+        status: "success",
+        message: "Sales by customer report generated successfully",
+        customerData: report
+    });
+});
+
 module.exports = {
     createsalesorder,
     getallsalesorder,
@@ -140,5 +185,8 @@ module.exports = {
     deletesalesorder,
     getsalesreport,
     getPaymentStatsummery,
-    updateSalesorderPaymentStatus
+    updateSalesorderPaymentStatus,
+    // Additional report functions
+    getMonthlySalesTrends,
+    getSalesByCustomerReport
 };

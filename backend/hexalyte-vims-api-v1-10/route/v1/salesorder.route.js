@@ -6,31 +6,41 @@ const salesorderValidation = require('../../validations/salesorder.validation');
 const { auth } = require('../../middleware/auth');
 const salesorderInvoice = require('../../controller/salesorderinvoice.controller');
 
-
-
-
-
-router
-  .route('/')
-  .post(auth(), validate(salesorderValidation.createsalesorder), salesorderController.createsalesorder)
-  .get(auth(), salesorderController.getallsalesorder);
-router
-  .route('/:id')
-  .get(auth(), salesorderController.getsalesorderbyID)
-  .delete(auth(), validate(salesorderValidation.deletesalesorder), salesorderController.deletesalesorder)
-  .put(auth(), salesorderController.updateSalesorderPaymentStatus);
-
-router
-  .route('/update/:id')
-  .put(auth(), salesorderController.updateSalesorder)
+// ==================== REPORT ROUTES ====================
+// These must be defined BEFORE :id routes to avoid conflicts
 
 router
   .route('/report/sales')
   .get(salesorderController.getsalesreport);
 
 router
+  .route('/report/monthly-trends')
+  .get(auth(), salesorderController.getMonthlySalesTrends);
+
+router
+  .route('/report/by-customer')
+  .get(auth(), salesorderController.getSalesByCustomerReport);
+
+router
   .route('/summery/paidsummery')
   .get(salesorderController.getPaymentStatsummery);
+
+// ==================== CRUD ROUTES ====================
+
+router
+  .route('/')
+  .post(auth(), validate(salesorderValidation.createsalesorder), salesorderController.createsalesorder)
+  .get(auth(), salesorderController.getallsalesorder);
+
+router
+  .route('/update/:id')
+  .put(auth(), salesorderController.updateSalesorder)
+
+router
+  .route('/:id')
+  .get(auth(), salesorderController.getsalesorderbyID)
+  .delete(auth(), validate(salesorderValidation.deletesalesorder), salesorderController.deletesalesorder)
+  .put(auth(), salesorderController.updateSalesorderPaymentStatus);
 
 
 module.exports = router;         

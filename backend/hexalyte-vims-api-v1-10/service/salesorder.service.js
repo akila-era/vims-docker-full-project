@@ -34,7 +34,7 @@ const createsalesorder = async (params) => {
   for (const soItem of OrderItems) {
     const productStorageStock = await ProductStorage.findOne({ where: { ProductID: soItem.ProductID, LocationID } })
 
-    if (!productStorageStock || Number(productStorageStock.Quantity) < soItem.Quantity) {
+    if (!productStorageStock || Number(productStorageStock.Quantity) < Number(soItem.Quantity)) {
       response.Status = `Not quantity available for Product #${soItem.ProductID} in Warehouse #${LocationID}`
       terminate = true
       break
@@ -54,8 +54,8 @@ const createsalesorder = async (params) => {
       const productStorageStock = await ProductStorage.findOne({ where: { ProductID: soItem.ProductID, LocationID } })
       const productStock = await Product.findOne({ where: { ProductID: soItem.ProductID } })
 
-      const newStock = Number(productStorageStock.Quantity) - Number(soItem.Quantity)
-      const newProductStock = Number(productStock.QuantityInStock) - Number(soItem.Quantity)
+      const newStock = parseFloat((Number(productStorageStock.Quantity) - Number(soItem.Quantity)).toFixed(2))
+      const newProductStock = parseFloat((Number(productStock.QuantityInStock) - Number(soItem.Quantity)).toFixed(2))
 
       const addSalesOrderItem = await SalesorderDetail.create({ ...soItem, OrderID: OrderID })
       const addInventoryTransaction = await Inventory.create({ SalesOrderID: OrderID, ProductID: soItem.ProductID, Quantity: soItem.Quantity, TransactionDate: OrderDate, TransactionType })
@@ -144,7 +144,7 @@ const updateSalesorderById = async (orderId, params) => {
       where: { ProductID: soItem.ProductID, LocationID }
     });
 
-    if (!productStorageStock || Number(productStorageStock.Quantity) < soItem.Quantity) {
+    if (!productStorageStock || Number(productStorageStock.Quantity) < Number(soItem.Quantity)) {
       response.Status = `Not enough quantity available for Product #${soItem.ProductID} in Warehouse #${LocationID}`;
       return response;
     }
@@ -346,7 +346,35 @@ const getSalesReport = async ({ startDate, endDate }) => {
     type: db.sequelize.QueryTypes.SELECT
   })
 
-  return { results, discounts };
+  // Get order-level data with customer names
+  const orders = await db.sequelize.query(
+    `
+      SELECT 
+        so.OrderID,
+        so.OrderDate,
+        so.TotalAmount,
+        so.Status,
+        so.PaymentStatus,
+        so.Discount,
+        c.CustomerName,
+        c.PhoneNumber,
+        COUNT(DISTINCT sod.ProductID) AS ProductCount,
+        SUM(sod.Quantity) AS TotalItems
+      FROM salesorders so
+      LEFT JOIN customers c ON so.CustomerID = c.CustomerID
+      LEFT JOIN salesorderdetails sod ON so.OrderID = sod.OrderID
+      WHERE so.OrderDate BETWEEN :startDate AND :endDate
+      GROUP BY so.OrderID, so.OrderDate, so.TotalAmount, so.Status, 
+               so.PaymentStatus, so.Discount, c.CustomerName, c.PhoneNumber
+      ORDER BY so.OrderDate DESC
+    `,
+    {
+      replacements: { startDate, endDate },
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  return { results, discounts, orders };
 };
 
 const getPaymentStatusSummary = async () => {
@@ -379,6 +407,65 @@ const getPaymentStatusSummary = async () => {
   }
 };
 
+/**
+ * Get Monthly Sales Trends
+ * Returns: Monthly totals for trend analysis
+ */
+const getMonthlySalesTrends = async (year) => {
+  const results = await db.sequelize.query(
+    `
+    SELECT 
+      MONTH(OrderDate) AS Month,
+      YEAR(OrderDate) AS Year,
+      COUNT(*) AS OrderCount,
+      SUM(TotalAmount) AS TotalSales,
+      SUM(Discount) AS TotalDiscounts,
+      SUM(CASE WHEN PaymentStatus = 'PAID' THEN TotalAmount ELSE 0 END) AS PaidAmount,
+      SUM(CASE WHEN PaymentStatus = 'UNPAID' THEN TotalAmount ELSE 0 END) AS UnpaidAmount
+    FROM salesorders
+    WHERE YEAR(OrderDate) = :year AND isActive = 1
+    GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+    ORDER BY Month ASC
+    `,
+    {
+      replacements: { year },
+      type: db.sequelize.QueryTypes.SELECT
+    }
+  );
+
+  return results;
+};
+
+/**
+ * Get Sales by Customer Report
+ * Returns: Sales grouped by customer
+ */
+const getSalesByCustomerReport = async ({ startDate, endDate }) => {
+  const results = await db.sequelize.query(
+    `
+    SELECT 
+      c.CustomerID,
+      c.CustomerName,
+      c.PhoneNumber,
+      COUNT(so.OrderID) AS OrderCount,
+      SUM(so.TotalAmount) AS TotalSpent,
+      SUM(so.Discount) AS TotalDiscounts,
+      MAX(so.OrderDate) AS LastOrderDate
+    FROM salesorders so
+    JOIN customers c ON so.CustomerID = c.CustomerID
+    WHERE so.OrderDate BETWEEN :startDate AND :endDate AND so.isActive = 1
+    GROUP BY c.CustomerID, c.CustomerName, c.PhoneNumber
+    ORDER BY TotalSpent DESC
+    `,
+    {
+      replacements: { startDate, endDate },
+      type: db.sequelize.QueryTypes.SELECT
+    }
+  );
+
+  return results;
+};
+
 module.exports = {
   getPaymentStatusSummary,
   createsalesorder,
@@ -387,5 +474,8 @@ module.exports = {
   updateSalesorderById,
   deletesalesorderById,
   getSalesReport,
-  updatesalesorderPayementStatusById
+  updatesalesorderPayementStatusById,
+  // Additional report functions
+  getMonthlySalesTrends,
+  getSalesByCustomerReport
 };
