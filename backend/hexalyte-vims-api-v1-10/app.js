@@ -29,8 +29,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({ extended:true }))
 app.use(cors({
-    // origin: 'https://vims.hexalyte.com',
-    origin: 'http://194.163.175.47:3002',
+     origin: 'https://vims.hexalyte.com',
     credentials: true
 }));
 

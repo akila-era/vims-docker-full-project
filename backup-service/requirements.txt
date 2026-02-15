@@ -1,7 +1,4 @@
-smtplib
-email
 mysql-connector-python
 python-dotenv
 schedule
 requests
-zipfile36
