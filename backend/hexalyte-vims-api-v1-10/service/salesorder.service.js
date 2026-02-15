@@ -80,7 +80,21 @@ const createsalesorder = async (params) => {
 
 const getallsalesorder = async () => {
   try {
-    const salesorder = await Salesorder.findAll();
+    const salesorder = await Salesorder.findAll({
+      include: [
+        {
+          model: db.customer,
+          as: 'customer',
+          attributes: ['CustomerID', 'Name', 'Email', 'Phone']
+        },
+        {
+          model: db.warehouselocation,
+          as: 'warehouselocation',
+          attributes: ['LocationID', 'WarehouseName']
+        }
+      ],
+      order: [['OrderID', 'DESC']]
+    });
     return salesorder;
   } catch (error) {
     console.log(error);
@@ -88,8 +102,40 @@ const getallsalesorder = async () => {
 };
 
 const getsalesorderBYId = async (OrderId) => {
-  const salesorder = await Salesorder.findOne({ where: { OrderId } });
-  return salesorder;
+  const salesorder = await Salesorder.findOne({
+    where: { OrderId },
+    include: [
+      {
+        model: db.customer,
+        as: 'customer',
+        attributes: ['CustomerID', 'Name', 'Email', 'Phone']
+      },
+      {
+        model: db.warehouselocation,
+        as: 'warehouselocation',
+        attributes: ['LocationID', 'WarehouseName']
+      }
+    ]
+  });
+
+  if (!salesorder) return null;
+
+  // Get order details with product info
+  const orderDetails = await SalesorderDetail.findAll({
+    where: { OrderId: OrderId },
+    include: [
+      {
+        model: Product,
+        required: true
+      }
+    ]
+  });
+
+  // Convert to plain object and add details
+  const result = salesorder.toJSON();
+  result.salesorderdetails = orderDetails.map(d => d.toJSON());
+
+  return result;
 };
 
 const updatesalesorderPayementStatusById = async (OrderId, updateBody) => {
