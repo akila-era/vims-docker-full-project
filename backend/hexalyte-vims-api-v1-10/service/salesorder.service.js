@@ -387,10 +387,11 @@ const getPaymentStatusSummary = async () => {
   try {
     const query = `
     SELECT
-    SUM(CASE WHEN PaymentStatus = 'PAID' THEN TotalAmount ELSE 0 END) AS
-    TotalPaidAmount,
-    SUM(CASE WHEN PaymentStatus='UNPAID' THEN TotalAmount ELSE 0 END) AS
-    TotalUnpaidAmount(TotalAmount) AS TotalAmount FROM salesorders;
+      SUM(CASE WHEN PaymentStatus = 'PAID' THEN TotalAmount ELSE 0 END) AS TotalPaidAmount,
+      SUM(CASE WHEN PaymentStatus = 'UNPAID' THEN TotalAmount ELSE 0 END) AS TotalUnpaidAmount,
+      SUM(TotalAmount) AS TotalAmount
+    FROM salesorders
+    WHERE isActive = 1;
     `;
 
     const results = await sequelize.query(query, {
@@ -408,7 +409,7 @@ const getPaymentStatusSummary = async () => {
     return {
       success: false,
       data: {},
-      message: "Failed to fetch payment status summary: "
+      message: "Failed to fetch payment status summary: " + error.message
     };
   }
 };
