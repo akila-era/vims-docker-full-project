@@ -91,12 +91,39 @@ const updatePurchaseOrderDetails = async (req, body) => {
         return "Invalid Product ID"
     }
 
+    // Get old quantity to calculate difference
+    const oldDetail = await Purchaseorderdetail.findOne({ where: { OrderID, ProductID } });
+    const oldQty = oldDetail ? Number(oldDetail.Quantity) : 0;
+    const newQty = Number(Quantity);
+    const qtyDiff = newQty - oldQty;
+
     const updatedPurchaseOrderDetail = {
         Quantity,
         UnitPrice
     }
 
     const updatePurchaseOrderDetail = await Purchaseorderdetail.update(updatedPurchaseOrderDetail, { where: { OrderID, ProductID } })
+
+    // Adjust inventory by the difference
+    if (qtyDiff !== 0) {
+        const currentStock = Number(checkProductID.QuantityInStock) || 0;
+        await Product.update(
+            { QuantityInStock: currentStock + qtyDiff },
+            { where: { ProductID } }
+        );
+
+        // Update warehouse stock if available
+        const storages = await ProductStorage.findAll({ where: { ProductID } });
+        if (storages.length > 0) {
+            const storage = storages[0];
+            const storageQty = Number(storage.Quantity) || 0;
+            await ProductStorage.update(
+                { Quantity: storageQty + qtyDiff, LastUpdated: new Date() },
+                { where: { ProductID, LocationID: storage.LocationID } }
+            );
+        }
+    }
+
     return updatePurchaseOrderDetail
 
 }
@@ -114,6 +141,32 @@ const deletePurchaseOrderDetail = async (params) => {
     const checkProductID = await Product.findByPk(ProductID)
     if (checkProductID == null) {
         return "Invalid Product ID"
+    }
+
+    // Get quantity before deleting to subtract from inventory
+    const detail = await Purchaseorderdetail.findOne({ where: { OrderID, ProductID } });
+    if (detail) {
+        const qty = Number(detail.Quantity);
+
+        // Subtract from global stock
+        const currentStock = Number(checkProductID.QuantityInStock) || 0;
+        const newStock = Math.max(0, currentStock - qty);
+        await Product.update(
+            { QuantityInStock: newStock },
+            { where: { ProductID } }
+        );
+
+        // Subtract from warehouse stock
+        const storages = await ProductStorage.findAll({ where: { ProductID } });
+        if (storages.length > 0) {
+            const storage = storages[0];
+            const storageQty = Number(storage.Quantity) || 0;
+            const newStorageQty = Math.max(0, storageQty - qty);
+            await ProductStorage.update(
+                { Quantity: newStorageQty, LastUpdated: new Date() },
+                { where: { ProductID, LocationID: storage.LocationID } }
+            );
+        }
     }
 
     const deletedPurchaseOrderDetail = await Purchaseorderdetail.destroy({ where: { OrderID, ProductID } })
