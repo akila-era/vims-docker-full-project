@@ -2,6 +2,8 @@ const db = require('../models');
 const Purchaseorderdetail = db.purchaseorderdetail;
 const Purchaseorder = db.purchaseorder;
 const Product = db.product;
+const ProductStorage = db.productstorage;
+const InventoryTransaction = db.inventorytransaction;
 
 const getPurchaseOrderDetailsByOrderID = async (orderID) => {
 
@@ -12,7 +14,7 @@ const getPurchaseOrderDetailsByOrderID = async (orderID) => {
 
 const addPurchaseOrderDetails = async (params) => {
 
-    const { OrderID, ProductID, Quantity, UnitPrice } = params;
+    const { OrderID, ProductID, Quantity, UnitPrice, LocationID } = params;
 
     const checkPurchaseOrderID = await Purchaseorder.findByPk(OrderID)
     if (checkPurchaseOrderID == null) {
@@ -32,6 +34,42 @@ const addPurchaseOrderDetails = async (params) => {
     }
 
     const addPurchaseOrderByOrderID = await Purchaseorderdetail.create(newPurchaseOrderDetail);
+
+    // Update Product global stock (QuantityInStock)
+    const currentQty = Number(checkProductID.QuantityInStock) || 0;
+    await Product.update(
+        { QuantityInStock: currentQty + Number(Quantity) },
+        { where: { ProductID } }
+    );
+
+    // Update warehouse-level stock (ProductStorage) if LocationID provided
+    if (LocationID) {
+        const storage = await ProductStorage.findOne({ where: { ProductID, LocationID } });
+        if (storage) {
+            const storageQty = Number(storage.Quantity) || 0;
+            await ProductStorage.update(
+                { Quantity: storageQty + Number(Quantity), LastUpdated: new Date() },
+                { where: { ProductID, LocationID } }
+            );
+        } else {
+            await ProductStorage.create({
+                ProductID,
+                LocationID,
+                Quantity: Number(Quantity),
+                LastUpdated: new Date()
+            });
+        }
+
+        // Create inventory transaction record
+        await InventoryTransaction.create({
+            PurchaseOrderID: OrderID,
+            ProductID,
+            Quantity: Number(Quantity),
+            TransactionDate: new Date(),
+            TransactionType: 'FULFILL'
+        });
+    }
+
     return addPurchaseOrderByOrderID;
 
 }
