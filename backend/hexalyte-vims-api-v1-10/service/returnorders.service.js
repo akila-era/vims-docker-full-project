@@ -519,6 +519,13 @@ const createReturnSalesOrder = async (orderId, params) => {
             }
 
             response.data.creditBalance = creditBalance;
+            
+            // Update sales order status to RETURNED
+            await SalesOrders.update(
+                { Status: 'RETURNED' },
+                { where: { OrderID: orderId }, transaction }
+            );
+            
             await transaction.commit();
 
             response.status = 'success';
