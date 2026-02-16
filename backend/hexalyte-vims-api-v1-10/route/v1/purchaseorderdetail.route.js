@@ -6,7 +6,7 @@ const validate = require('../../middleware/validate')
 const purchaseorderdetailvalidator = require('../../validations/purchaseorderdetails.validation')
 
 router.route('/')
-    .post( auth(),PurchaseorderdetailController.addPurchaseOrderDetails)
+    .post( PurchaseorderdetailController.addPurchaseOrderDetails)
 
 router.route('/:id')
     .get( auth(), validate(purchaseorderdetailvalidator.getPurchaseOrderDetails), PurchaseorderdetailController.getPurchaseOrderDetails)
