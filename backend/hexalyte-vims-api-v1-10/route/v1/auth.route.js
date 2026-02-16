@@ -15,6 +15,13 @@ router.post('/reset-password', validate(authValidation.resetPassword),  authCont
 router.post('/send-verification-email', auth('user'), authController.sendVerificationEmail);  
 router.post('/verify-email', validate(authValidation.verifyEmail),  authController.verifyEmail);
 
+// ============= SECURITY ROUTES =============
+router.get('/security-preferences', auth(), authController.getSecurityPreferences);
+router.put('/security-preferences', auth(), validate(authValidation.updateSecurityPreferences), authController.updateSecurityPreferences);
+router.post('/pin-failed-attempt', auth(), authController.trackFailedPinAttempt);
+router.post('/pin-reset-attempts', auth(), authController.resetPinAttempts);
+router.delete('/security-preferences', auth(), authController.resetSecuritySettings);
+
 module.exports = router;
 
 

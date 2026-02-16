@@ -4,6 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const httpStatus = require("http-status");
 const userService = require("../service/user.service");
 const emailService = require("../service/email.service");
+const securityService = require("../service/security.service");
 const ApiError = require("../utils/ApiError");
 
 /**
@@ -18,8 +19,23 @@ const login = catchAsync(async (req, res) => {
   }
 
   const tokens = await tokenService.generateAuthTokens(user, rememberMe);
+  
+  // Get security preferences for this user
+  const security = await securityService.getSecuritySummary(user.id);
+  
+  // Mark first login as complete if it was the first login
+  if (security.is_first_login) {
+    await securityService.markFirstLoginComplete(user.id);
+    security.is_first_login = false;
+  }
+  
   // return res.status(httpStatus.OK).cookie('token', tokens, { httpOnly: true}).send({ message: "Login successful", user, accessTokenExpiry: tokens.access.expires });
-  return res.status(httpStatus.CREATED).send({ message: "Login successful", user, tokens });
+  return res.status(httpStatus.CREATED).send({ 
+    message: "Login successful", 
+    user, 
+    tokens,
+    security 
+  });
 });
 
 /**
@@ -77,6 +93,18 @@ const logout = catchAsync(async (req, res) => {
     cookieNames: Object.keys(req.cookies || {})
   });
 
+  let userId = null;
+  
+  // Try to get user ID from refresh token before deleting it
+  if (refreshToken) {
+    try {
+      const tokenDoc = await tokenService.verifyToken(refreshToken, 'refresh');
+      userId = tokenDoc.user_id;
+    } catch (error) {
+      console.log('Could not extract user ID from token:', error.message);
+    }
+  }
+
   if (!refreshToken) {
     // Still clear cookies even if no token found
     clearAuthCookies(res);
@@ -85,6 +113,13 @@ const logout = catchAsync(async (req, res) => {
 
   try {
     await authService.logout(refreshToken);
+    
+    // Reset security settings for this user if we have the user ID
+    if (userId) {
+      console.log('Resetting security settings for user:', userId);
+      await securityService.resetSecuritySettings(userId);
+    }
+    
   } catch (error) {
     console.log('Token deletion error:', error.message);
     // Continue with logout even if token deletion fails
@@ -175,6 +210,82 @@ const verifyEmail = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send({ message: "Email verified successfully" });
 });
 
+// ============= SECURITY ENDPOINTS =============
+
+/**
+ * Get Security Preferences
+ */
+const getSecurityPreferences = catchAsync(async (req, res) => {
+  const security = await securityService.getSecuritySummary(req.user.id);
+  res.status(httpStatus.OK).send({ 
+    message: "Security preferences retrieved successfully", 
+    security 
+  });
+});
+
+/**
+ * Update Security Preferences
+ */
+const updateSecurityPreferences = catchAsync(async (req, res) => {
+  const { pin_enabled, biometric_enabled, device_id } = req.body;
+  
+  const preferences = await securityService.updateSecurityPreferences(req.user.id, {
+    pin_enabled,
+    biometric_enabled,
+    device_id
+  });
+  
+  const security = await securityService.getSecuritySummary(req.user.id);
+  res.status(httpStatus.OK).send({ 
+    message: "Security preferences updated successfully", 
+    security 
+  });
+});
+
+/**
+ * Track Failed PIN Attempt
+ */
+const trackFailedPinAttempt = catchAsync(async (req, res) => {
+  // Check if user is already locked out
+  const isLocked = await securityService.isUserLockedOut(req.user.id);
+  if (isLocked) {
+    return res.status(httpStatus.TOO_MANY_REQUESTS).send({ 
+      message: "Account temporarily locked due to too many failed attempts" 
+    });
+  }
+  
+  const preferences = await securityService.trackFailedPinAttempt(req.user.id);
+  const security = await securityService.getSecuritySummary(req.user.id);
+  
+  res.status(httpStatus.OK).send({ 
+    message: "Failed attempt recorded", 
+    security 
+  });
+});
+
+/**
+ * Reset PIN Attempts (on successful PIN entry)
+ */
+const resetPinAttempts = catchAsync(async (req, res) => {
+  await securityService.resetPinAttempts(req.user.id);
+  const security = await securityService.getSecuritySummary(req.user.id);
+  
+  res.status(httpStatus.OK).send({ 
+    message: "PIN attempts reset successfully", 
+    security 
+  });
+});
+
+/**
+ * Reset Security Settings (called during logout)
+ */
+const resetSecuritySettings = catchAsync(async (req, res) => {
+  await securityService.resetSecuritySettings(req.user.id);
+  res.status(httpStatus.OK).send({ 
+    message: "Security settings reset successfully" 
+  });
+});
+
 module.exports = {
   login,
   register,
@@ -184,4 +295,10 @@ module.exports = {
   resetPassword,
   sendVerificationEmail,
   verifyEmail,
+  // Security endpoints
+  getSecurityPreferences,
+  updateSecurityPreferences,
+  trackFailedPinAttempt,
+  resetPinAttempts,
+  resetSecuritySettings,
 };

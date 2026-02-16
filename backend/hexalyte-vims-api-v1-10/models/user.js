@@ -14,6 +14,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'transferBy',
         as: 'transfers'
       });
+      
+      // Association with security preferences
+      user.hasOne(models.UserSecurityPreferences, {
+        foreignKey: 'user_id',
+        as: 'securityPreferences',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      });
     }
   }
   user.init({

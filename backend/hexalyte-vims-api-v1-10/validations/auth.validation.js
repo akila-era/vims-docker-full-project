@@ -51,6 +51,28 @@ const verifyEmail = {
   }),
 };
 
+// ============= SECURITY VALIDATION SCHEMAS =============
+
+const updateSecurityPreferences = {
+  body: Joi.object().keys({
+    pin_enabled: Joi.boolean().optional(),
+    biometric_enabled: Joi.boolean().optional(),
+    device_id: Joi.string().optional().allow(null)
+  }).min(1), // At least one field must be provided
+};
+
+const trackFailedPinAttempt = {
+  body: Joi.object().keys({
+    // No body parameters needed - user ID comes from auth token
+  }),
+};
+
+const resetPinAttempts = {
+  body: Joi.object().keys({
+    // No body parameters needed - user ID comes from auth token
+  }),
+};
+
 module.exports = {
   register,
   login,
@@ -59,4 +81,8 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  // Security validations
+  updateSecurityPreferences,
+  trackFailedPinAttempt,
+  resetPinAttempts,
 };
