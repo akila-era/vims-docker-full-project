@@ -6,8 +6,6 @@ import { useAuth } from "context/AuthContext";
 import { storeTokens } from "auth/tokenService";
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
-console.log('LOGIN - BASE_URL:', BASE_URL);
-console.log('LOGIN - REACT_APP_BASE_URL:', process.env.REACT_APP_BASE_URL);
 
 export default function Login() {
   const history = useHistory();
