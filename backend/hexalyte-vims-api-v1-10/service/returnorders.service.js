@@ -447,7 +447,9 @@ const createReturnSalesOrder = async (orderId, params) => {
             }
 
             // Process exchange items
-            let creditBalance = returnTotal;
+            // Credit = Return Total - Order Discount - Exchange Total
+            const orderDiscount = parseFloat(existingOrder.Discount) || 0;
+            let creditBalance = returnTotal - orderDiscount;
 
             for (const exchangeItem of ExchangeItems) {
                 const quantity = parseInt(exchangeItem.Quantity);
