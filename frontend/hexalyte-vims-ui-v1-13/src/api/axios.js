@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:4444"
-// const BASE_URL = "https://api.vims.hexalyte.com/v1/"
+const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:4444/v1/"
+
 const axiosInstance = axios.create({
   baseURL: BASE_URL
 })
