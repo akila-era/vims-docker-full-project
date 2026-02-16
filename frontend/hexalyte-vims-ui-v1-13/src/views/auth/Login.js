@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import { useAuth } from "context/AuthContext";
 import { storeTokens } from "auth/tokenService";
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+const BASE_URL = "https://api.vims.hexalyte.com/v1/";
 
 export default function Login() {
   const history = useHistory();

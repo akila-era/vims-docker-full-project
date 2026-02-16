@@ -7,7 +7,7 @@ import { createAxiosInstance } from "api/axiosInstance";
 
 export default function CardPageVisits() {
   const history = useHistory();
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = "https://api.vims.hexalyte.com/v1/";
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 

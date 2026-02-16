@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { createAxiosInstance } from "api/axiosInstance";
 
 export default function CardSocialTraffic() {
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = "https://api.vims.hexalyte.com/v1/";
   const [salesOrderDetails, setSalesOrderDetails] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [products, setProducts] = useState([]);

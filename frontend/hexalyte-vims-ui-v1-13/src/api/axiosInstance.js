@@ -2,7 +2,7 @@ import axios from "axios";
 
 import { getStoredTokens, isTokenExpired, replaceTokens, clearTokens } from "auth/tokenService";
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+const BASE_URL = "https://api.vims.hexalyte.com/v1/";
 
 export const createAxiosInstance = () => {
 
