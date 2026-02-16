@@ -32,6 +32,7 @@ app.use(express.urlencoded({ extended:true }))
 // CORS Configuration - Allow frontend to access API
 const allowedOrigins = [
     process.env.CORS_ORIGIN || 'https://vims.hexalyte.com',
+    'https://api.vims.hexalyte.com',
     'http://localhost:3000',
     'http://localhost:3002'
 ];
@@ -40,6 +41,11 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, curl, Postman)
         if (!origin) return callback(null, true);
+        
+        // Allow any hexalyte.com subdomain
+        if (origin && origin.match(/https?:\/\/([a-z0-9-]+\.)?hexalyte\.com$/)) {
+            return callback(null, true);
+        }
         
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
