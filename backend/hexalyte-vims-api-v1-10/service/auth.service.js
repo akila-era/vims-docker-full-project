@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const tokenService = require('./token.service');
 const userService = require('./user.service');
 const db = require("../models");

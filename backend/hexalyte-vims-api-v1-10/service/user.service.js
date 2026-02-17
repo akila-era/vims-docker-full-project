@@ -114,7 +114,7 @@
 //     deleteUserById,
 // };
 const db = require("../models");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const User = db.user;
 const createUser = async (params) => {
     const { firstname, lastname, username, email, password, role ,gender, birthday} = params;
