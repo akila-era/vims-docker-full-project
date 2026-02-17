@@ -61,15 +61,25 @@ module.exports = {
     });
 
     // Add unique constraint to ensure one record per user
-    await queryInterface.addIndex('user_security_preferences', ['user_id'], {
-      unique: true,
-      name: 'user_security_preferences_user_id_unique'
-    });
+    try {
+      await queryInterface.addIndex('user_security_preferences', ['user_id'], {
+        unique: true,
+        name: 'user_security_preferences_user_id_unique'
+      });
+    } catch (e) {
+      // Index may already exist, ignore error
+      console.log('Index user_security_preferences_user_id_unique may already exist');
+    }
 
     // Add index for device_id for faster lookups
-    await queryInterface.addIndex('user_security_preferences', ['device_id'], {
-      name: 'user_security_preferences_device_id_index'
-    });
+    try {
+      await queryInterface.addIndex('user_security_preferences', ['device_id'], {
+        name: 'user_security_preferences_device_id_index'
+      });
+    } catch (e) {
+      // Index may already exist, ignore error
+      console.log('Index user_security_preferences_device_id_index may already exist');
+    }
   },
 
   async down(queryInterface, Sequelize) {
