@@ -39,4 +39,13 @@ router
   .route('/best-customers')
   .get(auth(), dashboardController.getBestCustomers);
 
+/**
+ * @route GET /dashboard/daily-revenue
+ * @description Get daily revenue for last 30 days
+ * @access Private (requires authentication)
+ */
+router
+  .route('/daily-revenue')
+  .get(auth(), dashboardController.getDailyRevenue);
+
 module.exports = router;

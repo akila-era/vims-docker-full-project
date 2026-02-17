@@ -352,9 +352,84 @@ const getBestCustomers = async (limit = 10) => {
   }
 };
 
+/**
+ * Get daily revenue data for the last 30 days
+ */
+const getDailyRevenue = async () => {
+  try {
+    const now = new Date();
+    const last30Days = new Date();
+    last30Days.setDate(now.getDate() - 30);
+
+    // Get sales data for the last 30 days
+    const salesData = await Salesorder.findAll({
+      where: {
+        isActive: 1,
+        OrderDate: {
+          [Op.gte]: last30Days
+        }
+      },
+      attributes: ['OrderDate', 'TotalAmount', 'Status'],
+      order: [['OrderDate', 'ASC']]
+    });
+
+    // Group sales by day
+    const dailyData = {};
+    
+    // Initialize all days to 0
+    for (let i = 0; i < 30; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - 29 + i);
+      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      dailyData[dateKey] = { 
+        revenue: 0, 
+        orders: 0,
+        displayDate: `${date.getDate()}/${date.getMonth() + 1}`
+      };
+    }
+
+    // Populate with actual data
+    salesData.forEach(order => {
+      const date = new Date(order.OrderDate);
+      const dateKey = date.toISOString().split('T')[0];
+      if (dailyData[dateKey]) {
+        dailyData[dateKey].orders += 1;
+        dailyData[dateKey].revenue += parseFloat(order.TotalAmount || 0);
+      }
+    });
+
+    // Convert to arrays for chart data
+    const dates = Object.keys(dailyData).sort();
+    const labels = dates.map(date => dailyData[date].displayDate);
+    const revenueData = dates.map(date => dailyData[date].revenue);
+    const ordersData = dates.map(date => dailyData[date].orders);
+
+    // Calculate totals
+    const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+    const totalOrders = ordersData.reduce((sum, val) => sum + val, 0);
+    const avgDailyRevenue = totalRevenue / 30;
+
+    return {
+      dailyRevenue: {
+        labels: labels,
+        revenue: revenueData,
+        orders: ordersData,
+        totalRevenue: totalRevenue,
+        totalOrders: totalOrders,
+        avgDailyRevenue: avgDailyRevenue
+      }
+    };
+
+  } catch (error) {
+    console.error('Error getting daily revenue:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getAnalyticsData,
   getTopProducts,
-  getBestCustomers
+  getBestCustomers,
+  getDailyRevenue
 };

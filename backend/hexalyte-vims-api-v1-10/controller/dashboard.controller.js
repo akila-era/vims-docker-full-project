@@ -60,9 +60,24 @@ const getBestCustomers = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * Get daily revenue for last 30 days
+ * @route GET /dashboard/daily-revenue
+ * @returns {Object} Daily revenue data with totals and averages
+ */
+const getDailyRevenue = catchAsync(async (req, res) => {
+  const dailyRevenue = await dashboardService.getDailyRevenue();
+  
+  return res.status(httpStatus.OK).send({
+    status: 'success',
+    data: dailyRevenue
+  });
+});
+
 module.exports = {
   getDashboardStats,
   getAnalytics,
   getTopProducts,
-  getBestCustomers
+  getBestCustomers,
+  getDailyRevenue
 };
