@@ -41,6 +41,10 @@ router
   .put(auth(), salesorderController.updateSalesorder)
 
 router
+  .route('/bulk-mark-paid')
+  .put(auth(), salesorderController.bulkMarkAsPaid)
+
+router
   .route('/:id')
   .get(auth(), salesorderController.getsalesorderbyID)
   .delete(auth(), validate(salesorderValidation.deletesalesorder), salesorderController.deletesalesorder)

@@ -204,6 +204,26 @@ const getUnpaidOrdersReport = catchAsync(async (req, res) => {
     });
 });
 
+// Bulk update payment status for multiple orders
+const bulkMarkAsPaid = catchAsync(async (req, res) => {
+    const { orderIds, paymentStatus = 'PAID' } = req.body;
+
+    if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).send({
+            status: "failure",
+            message: "orderIds array is required"
+        });
+    }
+
+    const result = await Salesorderservices.bulkUpdatePaymentStatus(orderIds, paymentStatus);
+
+    res.status(httpStatus.OK).send({
+        status: "success",
+        message: result.message,
+        updatedCount: result.updatedCount
+    });
+});
+
 module.exports = {
     createsalesorder,
     getallsalesorder,
@@ -213,6 +233,7 @@ module.exports = {
     getsalesreport,
     getPaymentStatsummery,
     updateSalesorderPaymentStatus,
+    bulkMarkAsPaid,
     // Additional report functions
     getMonthlySalesTrends,
     getSalesByCustomerReport,

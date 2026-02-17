@@ -554,6 +554,24 @@ const getUnpaidOrdersByDateRange = async ({ startDate, endDate }) => {
   }
 };
 
+// Bulk update payment status for multiple orders
+const bulkUpdatePaymentStatus = async (orderIds, paymentStatus) => {
+  if (!orderIds || orderIds.length === 0) {
+    return { success: false, message: 'No order IDs provided', updatedCount: 0 };
+  }
+
+  const [updatedCount] = await Salesorder.update(
+    { PaymentStatus: paymentStatus },
+    { where: { OrderID: orderIds } }
+  );
+
+  return {
+    success: true,
+    message: `${updatedCount} orders updated to ${paymentStatus}`,
+    updatedCount
+  };
+};
+
 module.exports = {
   getPaymentStatusSummary,
   createsalesorder,
@@ -563,6 +581,7 @@ module.exports = {
   deletesalesorderById,
   getSalesReport,
   updatesalesorderPayementStatusById,
+  bulkUpdatePaymentStatus,
   // Additional report functions
   getMonthlySalesTrends,
   getSalesByCustomerReport,
