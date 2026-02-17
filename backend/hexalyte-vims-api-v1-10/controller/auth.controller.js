@@ -157,10 +157,54 @@ const clearAuthCookies = (res) => {
  * Refresh Tokens
  */
 const refreshTokens = catchAsync(async (req, res) => {
-  console.log(req.headers.authorization.replace('Bearer ', ''))
-  const tokens = await authService.refreshAuth(req.headers.authorization.replace('Bearer ', ''));
-  // res.status(httpStatus.OK).cookie('token', tokens, { httpOnly: true}).send({ message: "Tokens refreshed successfully", accessTokenExpiry: tokens.access.expires });
-  res.status(httpStatus.OK).send({ message: "Tokens refreshed successfully", tokens });
+  // Get refresh token from multiple sources (backward compatibility)
+  let refreshToken = null;
+  
+  // Option 1: Authorization header (current backend expectation)
+  if (req.headers.authorization) {
+    refreshToken = req.headers.authorization.replace('Bearer ', '');
+    console.log('Refresh token from Authorization header:', refreshToken);
+  }
+  // Option 2: Request body (Flutter app sends it this way)
+  else if (req.body.refresh_token) {
+    refreshToken = req.body.refresh_token;
+    console.log('Refresh token from request body:', refreshToken);
+  }
+  // Option 3: Request body alternative format
+  else if (req.body.refreshToken) {
+    refreshToken = req.body.refreshToken;
+    console.log('Refresh token from request body (alt):', refreshToken);
+  }
+  
+  if (!refreshToken) {
+    return res.status(httpStatus.BAD_REQUEST).send({ 
+      status: "fail", 
+      message: "Refresh token is required in Authorization header or request body" 
+    });
+  }
+  
+  try {
+    const tokens = await authService.refreshAuth(refreshToken);
+    
+    // Return tokens in multiple formats for compatibility
+    res.status(httpStatus.OK).send({ 
+      message: "Tokens refreshed successfully", 
+      tokens: tokens,
+      // Additional formats for Flutter compatibility
+      access_token: tokens.access.token,
+      accessToken: tokens.access.token,
+      refresh_token: tokens.refresh.token,
+      refreshToken: tokens.refresh.token,
+      token: tokens.access.token, // Simple format
+      accessTokenExpiry: tokens.access.expires
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(httpStatus.UNAUTHORIZED).send({ 
+      status: "fail", 
+      message: error.message || "Invalid or expired refresh token" 
+    });
+  }
 });
 
 /**
