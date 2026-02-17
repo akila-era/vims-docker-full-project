@@ -82,13 +82,14 @@ app.use(cors({
 //     res.end();
 //   }).listen(80);
 
-db.sequelize.sync()
-    .then(() => {
-        console.log("sync db.");
-    })
-    .catch((err) => {
-        console.log("Failed to sync db: " + err.message);
-    });
+// TEMPORARILY DISABLED: Sync causes issues with custom indexes and migrations already handle schema
+// db.sequelize.sync()
+//     .then(() => {
+//         console.log("sync db.");
+//     })
+//     .catch((err) => {
+//         console.log("Failed to sync db: " + err.message);
+//     });
 
 // jwt authentication
 app.use(passport.initialize());
