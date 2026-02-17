@@ -82,14 +82,9 @@ app.use(cors({
 //     res.end();
 //   }).listen(80);
 
-// TEMPORARILY DISABLED: Sync causes issues with custom indexes and migrations already handle schema
-// db.sequelize.sync()
-//     .then(() => {
-//         console.log("sync db.");
-//     })
-//     .catch((err) => {
-//         console.log("Failed to sync db: " + err.message);
-//     });
+// Database sync disabled - migrations handle schema creation/updates
+// Sequelize sync can cause issues with custom indexes and constraints
+console.log("Skipping db.sequelize.sync() - using migrations for schema management");
 
 // jwt authentication
 app.use(passport.initialize());
