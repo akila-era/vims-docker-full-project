@@ -20,13 +20,27 @@ const login = catchAsync(async (req, res) => {
 
   const tokens = await tokenService.generateAuthTokens(user, rememberMe);
   
-  // Get security preferences for this user
-  const security = await securityService.getSecuritySummary(user.id);
+  // Get security preferences for this user (with fallback if table doesn't exist)
+  let security = {
+    is_first_login: true,
+    pin_enabled: false,
+    biometric_enabled: false,
+    failed_attempts: 0,
+    is_locked_out: false,
+    lockout_until: null
+  };
   
-  // Mark first login as complete if it was the first login
-  if (security.is_first_login) {
-    await securityService.markFirstLoginComplete(user.id);
-    security.is_first_login = false;
+  try {
+    security = await securityService.getSecuritySummary(user.id);
+    
+    // Mark first login as complete if it was the first login
+    if (security.is_first_login) {
+      await securityService.markFirstLoginComplete(user.id);
+      security.is_first_login = false;
+    }
+  } catch (securityError) {
+    console.log('Security preferences not available, using defaults:', securityError.message);
+    // Continue with default security settings
   }
   
   // return res.status(httpStatus.OK).cookie('token', tokens, { httpOnly: true}).send({ message: "Login successful", user, accessTokenExpiry: tokens.access.expires });
