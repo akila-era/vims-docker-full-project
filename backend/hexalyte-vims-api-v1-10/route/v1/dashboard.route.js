@@ -12,4 +12,31 @@ router
   .route('/stats')
   .get(auth(), dashboardController.getDashboardStats);
 
+/**
+ * @route GET /dashboard/analytics
+ * @description Get analytics data for charts
+ * @access Private (requires authentication)
+ */
+router
+  .route('/analytics')
+  .get(auth(), dashboardController.getAnalytics);
+
+/**
+ * @route GET /dashboard/top-products
+ * @description Get top selling products
+ * @access Private (requires authentication)
+ */
+router
+  .route('/top-products')
+  .get(auth(), dashboardController.getTopProducts);
+
+/**
+ * @route GET /dashboard/best-customers
+ * @description Get best customers
+ * @access Private (requires authentication)
+ */
+router
+  .route('/best-customers')
+  .get(auth(), dashboardController.getBestCustomers);
+
 module.exports = router;

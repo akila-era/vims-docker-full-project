@@ -5,6 +5,7 @@ const Customer = db.customer;
 const Salesorder = db.salesorder;
 const Product = db.product;
 const ProductStorage = db.productstorage;
+const SalesorderDetail = db.salesorderdetail;
 
 /**
  * Get comprehensive dashboard statistics
@@ -207,6 +208,153 @@ const getDashboardStats = async () => {
   }
 };
 
+/**
+ * Get analytics data for charts including sales trends, revenue trends, etc.
+ */
+const getAnalyticsData = async () => {
+  try {
+    const now = new Date();
+    const last12Months = new Date();
+    last12Months.setMonth(now.getMonth() - 12);
+
+    // Get sales data for the last 12 months
+    const salesData = await Salesorder.findAll({
+      where: {
+        isActive: 1,
+        OrderDate: {
+          [Op.gte]: last12Months
+        }
+      },
+      attributes: ['OrderDate', 'TotalAmount', 'Status'],
+      order: [['OrderDate', 'ASC']]
+    });
+
+    // Group sales by month
+    const monthlyData = {};
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize all months to 0
+    for (let i = 0; i < 12; i++) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - 11 + i);
+      const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+      monthlyData[monthKey] = { sales: 0, revenue: 0, orders: 0 };
+    }
+
+    // Populate with actual data
+    salesData.forEach(order => {
+      const date = new Date(order.OrderDate);
+      const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+      if (monthlyData[monthKey]) {
+        monthlyData[monthKey].orders += 1;
+        monthlyData[monthKey].revenue += parseFloat(order.TotalAmount || 0);
+        if (['COMPLETED', 'DELIVERED', 'FINISHED'].includes(order.Status?.toUpperCase())) {
+          monthlyData[monthKey].sales += parseFloat(order.TotalAmount || 0);
+        }
+      }
+    });
+
+    // Convert to arrays for chart data
+    const labels = Object.keys(monthlyData);
+    const salesChartData = labels.map(month => monthlyData[month].sales);
+    const revenueChartData = labels.map(month => monthlyData[month].revenue);
+    const ordersChartData = labels.map(month => monthlyData[month].orders);
+
+    return {
+      salesTrend: {
+        labels: labels,
+        sales: salesChartData,
+        revenue: revenueChartData,
+        orders: ordersChartData
+      }
+    };
+
+  } catch (error) {
+    console.error('Error getting analytics data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get top selling products
+ */
+const getTopProducts = async (limit = 10) => {
+  try {
+    // Get product sales data by joining with sales order details
+    const topProducts = await SalesorderDetail.findAll({
+      attributes: [
+        'ProductID',
+        [db.sequelize.fn('SUM', db.sequelize.col('Quantity')), 'totalQuantitySold'],
+        [db.sequelize.fn('SUM', db.sequelize.literal('Quantity * UnitPrice')), 'totalRevenue']
+      ],
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['Name', 'SellingPrice']
+      }],
+      group: ['ProductID'],
+      order: [[db.sequelize.literal('totalRevenue'), 'DESC']],
+      limit: limit
+    });
+
+    return topProducts.map(item => ({
+      productID: item.ProductID,
+      productName: item.product?.Name || 'Unknown Product',
+      quantitySold: parseInt(item.getDataValue('totalQuantitySold') || 0),
+      totalRevenue: parseFloat(item.getDataValue('totalRevenue') || 0),
+      sellingPrice: parseFloat(item.product?.SellingPrice || 0)
+    }));
+
+  } catch (error) {
+    console.error('Error getting top products:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get best customers based on purchase amount
+ */
+const getBestCustomers = async (limit = 10) => {
+  try {
+    // Get customer purchase data
+    const bestCustomers = await Salesorder.findAll({
+      attributes: [
+        'CustomerID',
+        [db.sequelize.fn('COUNT', db.sequelize.col('OrderID')), 'totalOrders'],
+        [db.sequelize.fn('SUM', db.sequelize.col('TotalAmount')), 'totalSpent'],
+        [db.sequelize.fn('AVG', db.sequelize.col('TotalAmount')), 'avgOrderValue']
+      ],
+      include: [{
+        model: Customer,
+        as: 'customer',
+        attributes: ['Name', 'Email', 'Phone']
+      }],
+      where: { isActive: 1 },
+      group: ['CustomerID'],
+      order: [[db.sequelize.literal('totalSpent'), 'DESC']],
+      limit: limit
+    });
+
+    return bestCustomers.map(item => ({
+      customerID: item.CustomerID,
+      customerName: item.customer?.Name || 'Unknown Customer',
+      email: item.customer?.Email,
+      phone: item.customer?.Phone,
+      totalOrders: parseInt(item.getDataValue('totalOrders') || 0),
+      totalSpent: parseFloat(item.getDataValue('totalSpent') || 0),
+      avgOrderValue: parseFloat(item.getDataValue('avgOrderValue') || 0)
+    }));
+
+  } catch (error) {
+    console.error('Error getting best customers:', error);
+    throw error;
+  }
+};
+
 module.exports = {
-  getDashboardStats
+  getDashboardStats,
+  getAnalyticsData,
+  getTopProducts,
+  getBestCustomers
 };
