@@ -1,8 +1,17 @@
 const httpStatus = require('http-status');
 const db = require("../models");
-const UserSecurityPreferences = db.UserSecurityPreferences;
+const UserSecurityPreferences = db.UserSecurityPreferences || null;
 const User = db.user;
 const ApiError = require('../utils/ApiError');
+
+// Default security preferences to return when table doesn't exist
+const DEFAULT_SECURITY_PREFS = {
+  pin_enabled: false,
+  biometric_enabled: false,
+  is_first_login: true,
+  pin_failed_attempts: 0,
+  pin_lockout_until: null
+};
 
 /**
  * Get user security preferences by user ID
@@ -10,6 +19,12 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<UserSecurityPreferences>}
  */
 const getSecurityPreferences = async (userId) => {
+  // If UserSecurityPreferences model doesn't exist (migration disabled), return defaults
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, returning defaults');
+    return { ...DEFAULT_SECURITY_PREFS, user_id: userId };
+  }
+
   let preferences = await UserSecurityPreferences.findOne({
     where: { user_id: userId }
   });
@@ -36,6 +51,11 @@ const getSecurityPreferences = async (userId) => {
  * @returns {Promise<UserSecurityPreferences>}
  */
 const updateSecurityPreferences = async (userId, updateData) => {
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, skipping update');
+    return { ...DEFAULT_SECURITY_PREFS, user_id: userId };
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   
   // Only allow specific fields to be updated
@@ -58,6 +78,11 @@ const updateSecurityPreferences = async (userId, updateData) => {
  * @returns {Promise<UserSecurityPreferences>}
  */
 const markFirstLoginComplete = async (userId) => {
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, skipping first login mark');
+    return { ...DEFAULT_SECURITY_PREFS, user_id: userId, is_first_login: false };
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   await preferences.update({ is_first_login: false });
   return preferences;
@@ -69,6 +94,11 @@ const markFirstLoginComplete = async (userId) => {
  * @returns {Promise<void>}
  */
 const resetSecuritySettings = async (userId) => {
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, skipping reset');
+    return;
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   await preferences.update({
     pin_enabled: false,
@@ -85,6 +115,11 @@ const resetSecuritySettings = async (userId) => {
  * @returns {Promise<UserSecurityPreferences>}
  */
 const trackFailedPinAttempt = async (userId) => {
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, skipping failed attempt tracking');
+    return { ...DEFAULT_SECURITY_PREFS, user_id: userId };
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   const failedAttempts = preferences.pin_failed_attempts + 1;
   
@@ -109,6 +144,11 @@ const trackFailedPinAttempt = async (userId) => {
  * @returns {Promise<UserSecurityPreferences>}
  */
 const resetPinAttempts = async (userId) => {
+  if (!UserSecurityPreferences) {
+    console.log('UserSecurityPreferences model not available, skipping reset attempts');
+    return { ...DEFAULT_SECURITY_PREFS, user_id: userId };
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   await preferences.update({
     pin_failed_attempts: 0,
@@ -123,6 +163,10 @@ const resetPinAttempts = async (userId) => {
  * @returns {Promise<boolean>}
  */
 const isUserLockedOut = async (userId) => {
+  if (!UserSecurityPreferences) {
+    return false; // Not locked out if security table doesn't exist
+  }
+  
   const preferences = await getSecurityPreferences(userId);
   
   if (!preferences.pin_lockout_until) {
