@@ -22,6 +22,10 @@ router
   .get(auth(), salesorderController.getSalesByCustomerReport);
 
 router
+  .route('/report/unpaid')
+  .get(auth(), salesorderController.getUnpaidOrdersReport);
+
+router
   .route('/summery/paidsummery')
   .get(salesorderController.getPaymentStatsummery);
 

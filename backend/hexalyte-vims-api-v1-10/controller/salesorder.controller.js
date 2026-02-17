@@ -179,6 +179,31 @@ const getSalesByCustomerReport = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Get Unpaid Orders Report
+ * Query params: startDate, endDate (YYYY-MM-DD)
+ * Returns all unpaid sales orders within the specified date range
+ */
+const getUnpaidOrdersReport = catchAsync(async (req, res) => {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        return res.status(httpStatus.BAD_REQUEST).send({
+            status: 'fail',
+            message: 'startDate and endDate query parameters are required'
+        });
+    }
+
+    const unpaidOrders = await Salesorderservices.getUnpaidOrdersByDateRange({ startDate, endDate });
+
+    return res.status(httpStatus.OK).send({
+        status: "success",
+        message: "Unpaid orders report generated successfully",
+        count: unpaidOrders.length,
+        unpaidOrders: unpaidOrders
+    });
+});
+
 module.exports = {
     createsalesorder,
     getallsalesorder,
@@ -190,5 +215,6 @@ module.exports = {
     updateSalesorderPaymentStatus,
     // Additional report functions
     getMonthlySalesTrends,
-    getSalesByCustomerReport
+    getSalesByCustomerReport,
+    getUnpaidOrdersReport
 };

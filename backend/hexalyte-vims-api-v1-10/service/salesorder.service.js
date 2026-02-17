@@ -519,6 +519,39 @@ const getSalesByCustomerReport = async ({ startDate, endDate }) => {
   return results;
 };
 
+const getUnpaidOrdersByDateRange = async ({ startDate, endDate }) => {
+  try {
+    const unpaidOrders = await db.sequelize.query(
+      `
+        SELECT 
+          so.OrderID,
+          so.OrderDate,
+          so.TotalAmount,
+          so.PaymentStatus,
+          c.Name AS CustomerName,
+          c.Phone AS CustomerPhone,
+          c.Email AS CustomerEmail
+        FROM salesorders so
+        LEFT JOIN customers c ON so.CustomerID = c.CustomerID
+        WHERE so.PaymentStatus = 'UNPAID' 
+          AND so.OrderDate BETWEEN :startDate AND :endDate
+          AND so.isActive = 1
+        ORDER BY so.OrderDate DESC
+      `,
+      {
+        replacements: { startDate, endDate },
+        type: db.sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return unpaidOrders;
+  } catch (error) {
+    console.error('Unpaid Orders Report Error:', error.message);
+    console.error('Error details:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getPaymentStatusSummary,
   createsalesorder,
@@ -530,5 +563,6 @@ module.exports = {
   updatesalesorderPayementStatusById,
   // Additional report functions
   getMonthlySalesTrends,
-  getSalesByCustomerReport
+  getSalesByCustomerReport,
+  getUnpaidOrdersByDateRange
 };
