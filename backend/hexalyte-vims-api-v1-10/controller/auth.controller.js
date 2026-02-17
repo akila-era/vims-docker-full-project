@@ -271,12 +271,12 @@ const getSecurityPreferences = catchAsync(async (req, res) => {
  * Update Security Preferences
  */
 const updateSecurityPreferences = catchAsync(async (req, res) => {
-  const { pin_enabled, biometric_enabled, device_id } = req.body;
+  const { pin_enabled, biometric_enabled } = req.body;  // device_id TEMPORARILY DISABLED
   
   const preferences = await securityService.updateSecurityPreferences(req.user.id, {
     pin_enabled,
-    biometric_enabled,
-    device_id
+    biometric_enabled
+    // device_id  // TEMPORARILY DISABLED
   });
   
   const security = await securityService.getSecuritySummary(req.user.id);

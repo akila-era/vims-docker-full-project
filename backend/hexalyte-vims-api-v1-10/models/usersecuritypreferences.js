@@ -55,10 +55,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
-    device_id: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
+    // TEMPORARILY DISABLED: device_id field - table doesn't have this column yet
+    // device_id: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true
+    // },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
@@ -80,10 +81,11 @@ module.exports = (sequelize, DataTypes) => {
       {
         unique: true,
         fields: ['user_id']
-      },
-      {
-        fields: ['device_id']
       }
+      // TEMPORARILY DISABLED: device_id index - column doesn't exist yet
+      // {
+      //   fields: ['device_id']
+      // }
     ]
   });
 

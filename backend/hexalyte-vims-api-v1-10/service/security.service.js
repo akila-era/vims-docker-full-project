@@ -22,8 +22,8 @@ const getSecurityPreferences = async (userId) => {
       biometric_enabled: false,
       is_first_login: true,
       pin_failed_attempts: 0,
-      pin_lockout_until: null,
-      device_id: null
+      pin_lockout_until: null
+      // device_id: null  // TEMPORARILY DISABLED
     });
   }
 
@@ -40,7 +40,7 @@ const updateSecurityPreferences = async (userId, updateData) => {
   const preferences = await getSecurityPreferences(userId);
   
   // Only allow specific fields to be updated
-  const allowedFields = ['pin_enabled', 'biometric_enabled', 'device_id'];
+  const allowedFields = ['pin_enabled', 'biometric_enabled']; // 'device_id' TEMPORARILY REMOVED
   const filteredData = {};
   
   allowedFields.forEach(field => {
@@ -76,8 +76,8 @@ const resetSecuritySettings = async (userId) => {
     biometric_enabled: false,
     is_first_login: true,
     pin_failed_attempts: 0,
-    pin_lockout_until: null,
-    device_id: null
+    pin_lockout_until: null
+    // device_id: null  // TEMPORARILY DISABLED
   });
 };
 
