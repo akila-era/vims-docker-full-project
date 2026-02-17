@@ -530,9 +530,11 @@ const getUnpaidOrdersByDateRange = async ({ startDate, endDate }) => {
           so.PaymentStatus,
           c.Name AS CustomerName,
           c.Phone AS CustomerPhone,
-          c.Email AS CustomerEmail
+          c.Email AS CustomerEmail,
+          ca.City AS CustomerCity
         FROM salesorders so
         LEFT JOIN customers c ON so.CustomerID = c.CustomerID
+        LEFT JOIN customeraddresses ca ON c.CustomerAddressID = ca.AddressID
         WHERE so.PaymentStatus = 'UNPAID' 
           AND so.OrderDate BETWEEN :startDate AND :endDate
           AND so.isActive = 1
