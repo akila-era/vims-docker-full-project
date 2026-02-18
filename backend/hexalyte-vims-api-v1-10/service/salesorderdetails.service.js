@@ -43,7 +43,14 @@ const db = require('../models');
     };
 
     const getSalesOrderDetailsByOrderID = async (OrderID) => {
-        const orderDetails = await Salesorderdetails.findAll({ where: { OrderId: { [Op.eq] : OrderID } }, include: [{ model: db.product, required: true }] })
+        const orderDetails = await Salesorderdetails.findAll({
+            where: { OrderId: { [Op.eq]: OrderID } },
+            include: [{
+                model: db.product,
+                as: 'product',
+                required: false
+            }]
+        })
 
         if (!orderDetails[0]) {
             return {
