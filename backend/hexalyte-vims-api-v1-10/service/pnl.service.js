@@ -290,9 +290,109 @@ const getTopProfitableProducts = async ({ startDate, endDate, limit = 10 }) => {
   }));
 };
 
+/**
+ * Daily P&L breakdown
+ * Returns per-day: revenue, COGS, gross profit, return loss, net profit, order count
+ * Defaults: last 30 days
+ */
+const getDailyPnL = async ({ startDate, endDate }) => {
+  // ── 1. Daily revenue + discounts + orders ─────────────────────
+  const rows = await db.sequelize.query(
+    `
+    SELECT
+      DATE(so.OrderDate)                                            AS Day,
+      COALESCE(SUM(so.TotalAmount), 0)                             AS Revenue,
+      COALESCE(SUM(COALESCE(so.Discount, 0)), 0)                   AS Discounts,
+      COALESCE(SUM(so.TotalAmount - COALESCE(so.Discount, 0)), 0)  AS NetRevenue,
+      COUNT(so.OrderID)                                             AS OrderCount
+    FROM salesorders so
+    WHERE so.isActive = 1
+      AND DATE(so.OrderDate) BETWEEN :startDate AND :endDate
+    GROUP BY DATE(so.OrderDate)
+    ORDER BY DATE(so.OrderDate) ASC
+    `,
+    {
+      replacements: { startDate, endDate },
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // ── 2. Daily COGS ──────────────────────────────────────────────
+  const cogsRows = await db.sequelize.query(
+    `
+    SELECT
+      DATE(so.OrderDate)                                         AS Day,
+      COALESCE(SUM(sod.Quantity * p.BuyingPrice), 0)            AS COGS
+    FROM salesorderdetails sod
+    JOIN salesorders so ON sod.OrderID  = so.OrderID
+    JOIN products   p  ON sod.ProductID = p.ProductID
+    WHERE so.isActive = 1
+      AND DATE(so.OrderDate) BETWEEN :startDate AND :endDate
+    GROUP BY DATE(so.OrderDate)
+    `,
+    {
+      replacements: { startDate, endDate },
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // ── 3. Daily return losses ─────────────────────────────────────
+  const returnRows = await db.sequelize.query(
+    `
+    SELECT
+      DATE(ro.ReturnDate)                                        AS Day,
+      COALESCE(SUM(roi.Quantity * roi.UnitPrice), 0)            AS ReturnLoss
+    FROM returnorders ro
+    JOIN returnorderitems roi ON roi.ReturnID  = ro.ReturnID
+    WHERE DATE(ro.ReturnDate) BETWEEN :startDate AND :endDate
+    GROUP BY DATE(ro.ReturnDate)
+    `,
+    {
+      replacements: { startDate, endDate },
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // Build lookup maps
+  const cogsMap   = {};
+  cogsRows.forEach(r => { cogsMap[r.Day]   = parseFloat(r.COGS)       || 0; });
+  const returnMap = {};
+  returnRows.forEach(r => { returnMap[r.Day] = parseFloat(r.ReturnLoss) || 0; });
+
+  // Merge and compute profit fields
+  return rows.map(r => {
+    const day        = r.Day instanceof Date
+      ? r.Day.toISOString().slice(0, 10)
+      : String(r.Day).slice(0, 10);
+    const revenue    = parseFloat(r.Revenue)    || 0;
+    const discounts  = parseFloat(r.Discounts)  || 0;
+    const netRevenue = parseFloat(r.NetRevenue) || 0;
+    const cogs       = cogsMap[r.Day]   || 0;
+    const returnLoss = returnMap[r.Day] || 0;
+    const grossProfit = netRevenue - cogs;
+    const netProfit   = grossProfit - returnLoss;
+
+    return {
+      day,
+      revenue:      parseFloat(revenue.toFixed(2)),
+      discounts:    parseFloat(discounts.toFixed(2)),
+      netRevenue:   parseFloat(netRevenue.toFixed(2)),
+      cogs:         parseFloat(cogs.toFixed(2)),
+      grossProfit:  parseFloat(grossProfit.toFixed(2)),
+      returnLoss:   parseFloat(returnLoss.toFixed(2)),
+      netProfit:    parseFloat(netProfit.toFixed(2)),
+      margin:       netRevenue > 0
+        ? parseFloat(((netProfit / netRevenue) * 100).toFixed(2))
+        : 0,
+      orderCount:   parseInt(r.OrderCount) || 0,
+    };
+  });
+};
+
 module.exports = {
   getPnLSummary,
   getMonthlyPnL,
   getCategoryPnL,
   getTopProfitableProducts,
+  getDailyPnL,
 };

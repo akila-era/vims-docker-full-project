@@ -38,4 +38,12 @@ router.route('/by-category').get(auth(), pnlController.getCategoryPnL);
  */
 router.route('/top-products').get(auth(), pnlController.getTopProfitableProducts);
 
+/**
+ * @route GET /v1/pnl/daily
+ * @desc  Day-by-day P&L breakdown
+ * @query startDate=YYYY-MM-DD  endDate=YYYY-MM-DD
+ * @access Private
+ */
+router.route('/daily').get(auth(), pnlController.getDailyPnL);
+
 module.exports = router;

@@ -79,9 +79,33 @@ const getTopProfitableProducts = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * GET /v1/pnl/daily?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Day-by-day P&L breakdown (defaults to last 30 days)
+ */
+const getDailyPnL = catchAsync(async (req, res) => {
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
+  const {
+    startDate = thirtyDaysAgo.toISOString().slice(0, 10),
+    endDate   = today.toISOString().slice(0, 10),
+  } = req.query;
+
+  const data = await pnlService.getDailyPnL({ startDate, endDate });
+
+  return res.status(httpStatus.OK).send({
+    status:  'success',
+    message: 'Daily P&L retrieved successfully',
+    data,
+  });
+});
+
 module.exports = {
   getPnLSummary,
   getMonthlyPnL,
   getCategoryPnL,
   getTopProfitableProducts,
+  getDailyPnL,
 };
