@@ -103,7 +103,7 @@ const getallsalesorder = async () => {
 
 const getsalesorderBYId = async (OrderId) => {
   const salesorder = await Salesorder.findOne({
-    where: { OrderId },
+    where: { OrderID: OrderId },
     include: [
       {
         model: db.customer,
@@ -122,11 +122,12 @@ const getsalesorderBYId = async (OrderId) => {
 
   // Get order details with product info
   const orderDetails = await SalesorderDetail.findAll({
-    where: { OrderId: OrderId },
+    where: { OrderID: OrderId },
     include: [
       {
         model: Product,
-        required: true
+        as: 'product',
+        required: false
       }
     ]
   });
@@ -157,7 +158,7 @@ const updatesalesorderPayementStatusById = async (OrderId, updateBody) => {
   };
 
   const row = await Salesorder.update(salesorder, {
-    where: { OrderId: OrderId },
+    where: { OrderID: OrderId },
   });
   return row;
 };

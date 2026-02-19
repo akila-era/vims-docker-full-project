@@ -19,8 +19,8 @@ const db = require('../models');
 
 
         const [orderdetails, created] = await Salesorderdetails.findOrCreate({
-            where: { OrderId, ProductId },
-            defaults: { OrderId, ProductId, Quantity, UnitPrice }
+            where: { OrderID: OrderId, ProductID: ProductId },
+            defaults: { OrderID: OrderId, ProductID: ProductId, Quantity, UnitPrice }
         });
 
         if (created) {
@@ -44,7 +44,7 @@ const db = require('../models');
 
     const getSalesOrderDetailsByOrderID = async (OrderID) => {
         const orderDetails = await Salesorderdetails.findAll({
-            where: { OrderId: { [Op.eq]: OrderID } },
+            where: { OrderID: { [Op.eq]: OrderID } },
             include: [{
                 model: db.product,
                 as: 'product',
